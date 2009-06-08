@@ -1,0 +1,15 @@
+<?php
+
+class Egs
+{
+
+    function __construct($dsn) 
+    {
+        
+    }
+    
+
+}
+
+
+?>

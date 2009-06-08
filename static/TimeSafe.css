@@ -1,0 +1,223 @@
+
+select
+{
+    width: 50%;
+}
+
+input.time
+{
+    width: 3em;
+    margin: 0px;
+    padding: 0px;
+    border: none;
+    text-align: right;
+}
+
+table .error input.time
+{
+    background-color: #f55;
+}
+
+table .modified input.time
+{
+    background-color: #bfb;
+}
+
+.end_week input
+{
+    background-color: #eee;
+}
+
+.edit_buttons
+{
+    margin: 0.5em;
+    clear:left;
+}
+
+.tag_list
+{
+    width: 50%;
+    float:left;
+}
+
+.tag_list select
+{
+    width:100%;
+}
+
+.notification
+{
+    width:45%;
+    float:left;
+}
+
+.rich_edit
+{
+    width:45%;
+    float:left;
+}
+
+.anchor
+{
+    display: block;
+    position:relative;
+}
+
+/*
+  Styling of the sidebar
+*/
+
+.sidebar
+{
+    display:none;
+    position:absolute;
+    left: 0px;
+    top: 0px;
+    background: white;
+    border: 1px solid black;
+    padding: 0px;
+    z-index: 3;
+    width: 40em;
+}
+
+.sidebar_content
+{
+    padding: 5px 15px;
+}
+
+
+/*
+  Styling of popups
+  */
+.popup
+{
+    display:none;
+    position: fixed;
+    left: 20%;
+    top: 10%;
+    background: white;
+    border: 1px solid black;
+    padding: 0px;
+    z-index: 3;
+}
+
+.popup_content
+{
+    padding: 5px 15px;
+}
+
+.popup_title
+{
+    background: #777;
+    color: #fff;
+    font-weight:bold;
+    padding: 3px;
+    
+}
+
+.popup_title a
+{
+    position:absolute;
+    right: 0px;
+    top: 0px;
+    color: #fff;
+    font-family: sans-serif;
+    padding: 3px 6px;
+    margin:0px;
+    
+}
+
+.popup_title a:link,
+.popup_title a:visited,
+.popup_title a:hover 
+{
+    text-decoration: none;
+}
+
+
+.popup_title a:hover 
+{
+    background: #555;
+}
+
+
+table.time td,
+table.time th
+{
+    padding: 0px;
+    margin: 0px;
+}
+
+table.time td
+{
+    border-right: 1px solid #aaa;
+}
+td, th
+{
+    border-bottom: 1px solid #aaa;
+    padding-left: 5pt;
+    padding-right: 5pt;
+}
+
+
+
+td.odd
+{
+    background-color: #eee;
+}
+
+th.odd
+{
+    background-color: #555;
+}
+
+th
+{
+    background-color: #777;
+    color: #fff;
+    border-right: 1px solid white;
+    text-align: left;
+}
+
+th:last-child
+{
+    border-right: none;
+}
+
+
+/*
+  Styling of the main content pane
+  */
+.content
+{
+    width: 96%;
+    margin-left: 2%;
+}
+
+
+#tags
+{
+	height: 100%;
+}
+
+th.weekend
+{
+    color: #fcc;
+}
+
+button[disabled],
+input[disabled]
+{
+    color:gray;
+}
+
+
+.description
+{
+    width: 45%;
+}
+
+.hour_sum {
+    text-align: right;
+    font-weight:bold;
+}

@@ -1,0 +1,46 @@
+=TODO=
+
+==FEATURES==
+EGS: Export egs info on owned projects
+EGS: project visibility
+EGS: time report integration
+EGS:check that external work is billable
+allow overriding user identity
+server side error detection
+
+==BUGS==
+Don't delete tag groups, only stop showing them
+
+==FUTURE VERSION FEATURES==
+allow selecting multiple cells
+
+
+=DONE=
+
+==2009-06-03==
+Saving
+allow removal of hours
+Detect missing description
+
+==2009-06-04==
+Refuse to submit on error
+Reverse column order
+Show sum of all hours
+Detect more than 24 hours worked in single day
+Show weekends in red
+Add new project line buttons
+Arrows for moving in history
+
+
+==2009-06-05==
+Fix bug: re-striping table kills error color
+Performance improvements. Striping way faster. Loading is still slow, though.
+Detect wrong number of tags in tag group
+Show global error hint
+Better visual hint for weekends
+
+
+==2009-06-08==
+update framework code
+
+

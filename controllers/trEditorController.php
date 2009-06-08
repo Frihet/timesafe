@@ -1,0 +1,268 @@
+<?php
+
+class TREditorController
+extends Controller
+{
+    
+
+    function generateDates() 
+    {
+        
+        $mid_day_time = Entry::getBaseDate();
+        
+        $res = array();
+        
+        for($i=Entry::getDateCount()-1; $i >= 0; $i--) {
+            $tm = $mid_day_time - 3600*24*$i;
+            $foo=null;
+            $foo->month = (int)date('m', $tm);
+            $foo->year = (int)date('Y', $tm);
+            $foo->day = (int)date('d', $tm);
+            $wd = (int)date('w', $tm);
+            $foo->workday = ($wd>0) && ($wd <6);
+            $res[] = $foo;
+            
+        }
+        return $res;
+    }
+    
+    function nextBaseDateStr()
+    {
+        $tm = Entry::getBaseDate();
+        return date('Y-m-d', $tm + 7* 3600*24);
+    }
+
+    function prevBaseDateStr()
+    {
+        $tm = Entry::getBaseDate();
+        return date('Y-m-d', $tm - 7* 3600*24);
+    }
+
+    function populateTimeSlots()
+    {
+        $res = array();
+        foreach( Project::getProjects() as $project_id => $project_name) {
+            $project = null;
+            $project->project_id = $project_id;
+            $project->project_name = $project_name;
+            $project->slot = array();
+            $res[$project_id] = $project;
+        }
+        
+        foreach(Entry::fetch() as $entry) {
+            $proj = $res[$entry->project_id];
+            $idx = -1;
+            $offset = $entry->getDateOffset();
+            
+            for ($i=0; $i<count($proj->slot); $i++) {
+                $slot = $proj->slot[$i];
+                if ($slot[$offset] === null) {
+                    $idx = $i;
+                    break;
+                }
+            }
+            
+            if ($idx == -1) {
+                $idx = count($proj->slot);
+                $proj->slot[]=array();
+            }
+            
+            $proj->slot[$idx][$offset] = $entry;
+            
+        }
+        
+        /*
+         Make sure there is always at least one slot for each project
+        */
+        foreach($res as $project) {
+            if (!count($project->slot)) {
+                //$project->slot[] = array();
+            }
+        }
+
+        return array_values($res);
+    }
+
+    function viewRun()
+    {
+        $content = "";
+        $form = "";
+        
+        $next = self::nextBaseDateStr();
+        $prev = self::prevBaseDateStr();
+        
+        $form .= "<p><a href='?date=$prev'>«earlier</a> <a href='?date=$next'>later»</a></p>";
+        
+
+        $form .= "<table class='striped time'><thead><tr>";
+        $dates = $this->generateDates();
+        
+        $form .= "<th></th>";
+        $form .= "<th></th>";
+        $date_idx=0;
+        
+        foreach($dates as $date) {
+            $class = $date->workday ? "weekday" : "weekend";
+            
+            $form .= "<th class='$class'>{$date->day}/{$date->month}</th>";
+            $date = $date->year."-".$date->month."-".$date->day;
+            $form .= "<input type='hidden' name='date_$date_idx' value='$date'/>";
+            
+            $date_idx++;
+        }
+        
+        $time_slots = $this->populateTimeSlots();
+        
+        $project_idx = 0;
+        $form .= "</tr></thead>\n<tbody id='time_body'></tbody>\n";
+
+        $form .= "<tfoot>\n<tr>\n<th>Sum</th><td>";
+        
+        foreach(range(0, count($dates)-1) as $idx) {
+            $form .= "<td id='hour_sum_$idx' class='hour_sum'></td>";
+        }
+        
+        $form .= "</tr>\n</tfoot>\n";
+        $form .= "</table>";
+        $form .= "<div class='edit_buttons'><button type='submit' id='save'>Save</button></div><span id='notification_global'></span>";
+
+        $date_count = Entry::getDateCount();
+
+        $offset = (12-date('N',Entry::getBaseDate()))%7;
+        
+        $form .= "\n<script>\nvar TimeSafeData = {
+        weekendOffset: $offset,
+        days: $date_count,
+        projects: ";
+        
+        $tag_lookup = array();
+        foreach( $time_slots as $project_data) {
+            $project_data->tags = tag::getTags($project_data->project_id);
+        }
+        $form .= json_encode($time_slots);
+
+        $form .= ",\n\ttagGroups: " . json_encode(TagGroup::fetch());
+        
+
+        $form .= "\n};\nTimeSafe.addProjectLines();\n</script>\n\n";
+        
+        $content .= form::makeForm($form,array('action'=>'trEditor', 'task'=>'save'));
+        //        $content .= $this->entryListRun();
+        
+        $this->show(null, $content);
+
+    }
+
+    function entryListRun()
+    {
+
+        $content = "";
+
+        $entry_list = Entry::fetch();
+        if (!count($entry_list)) {
+            return "";
+        }
+        
+        
+        $content .= "
+<table class='striped'>
+<tr>
+<th>Project</th>
+<th>Tags</th>
+<th>Date</th>
+<th>Time</th>
+<th>Description</th>
+<th></th>
+</tr>
+";
+        foreach ($entry_list as $entry) {
+            $project = htmlEncode(Project::getName($entry->project_id));
+            $tags = array();
+            
+            if ($entry->_tags) {
+                foreach($entry->_tags as $tag_id) {
+                    
+                    $tags[] = htmlEncode(Tag::getName($tag_id));
+                }
+            }
+            $tags = implode(", ", $tags);
+            
+            $date = "";
+            $time = util::formatTime($entry->minutes);
+            $description = $entry->description;
+            
+            $content .= "<tr>
+<td>$project</td>
+<td>$tags</td>
+<td>$date</td>
+<td>$time</td>
+<td>$description</td>
+</tr>";
+            
+        }
+
+        $content .= "
+</table>
+";
+        return $content;
+    
+    }
+    
+
+    function saveRun()
+    {
+        
+        for($project_idx=0; ($project_id = param("project_$project_idx"))!== null; $project_idx++) {
+            
+            for ($slot_idx = 0;; $slot_idx++) {
+                if (param("time_{$project_idx}_{$slot_idx}_0") === null) {
+                    break;
+                }
+                
+                for ($day_idx=0;; $day_idx++) {
+                    $base_id = "{$project_idx}_{$slot_idx}_{$day_idx}";
+                    
+                    $time = param("time_$base_id");
+                    $description = param("description_$base_id");
+                    $tag = param("tag_$base_id");
+                    $entry_id = param("entry_id_$base_id",-1);
+                    
+                    $perform_date = param("date_$day_idx");
+                    
+                    if ($time === null) {
+                        break;
+                    }
+                    if ($time == '' || $time == 0) {
+                        if($entry_id >= 0) {
+                            $e = new Entry();
+                            $e->id = $entry_id;
+                            $e->delete();
+                        }
+                        continue;
+                    }
+                    
+                    $minutes = util::unformatTime($time);
+                    
+                    $e = new Entry();
+                    $e->initFromArray(array('id'=>$entry_id>=0?$entry_id:null,
+                                            'description'=>$description,
+                                            'minutes'=>$minutes, 
+                                            'project_id'=>$project_id, 
+                                            'user_id'=>User::$me->id,
+                                            'perform_date'=>$perform_date));
+                    
+                    $e->setTags($tag);
+                    $e->save();
+                    
+                }
+            }
+        }
+        message("Hours have been saved");
+        util::redirect(makeUrl());        
+    }
+    
+    
+}
+
+
+?>

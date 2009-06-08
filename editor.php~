@@ -1,0 +1,250 @@
+<?php
+
+require_once('ci_editor.php');
+require_once('ci_list_editor.php');
+require_once('ci_type_editor.php');
+require_once('column_editor.php');
+
+//define('CI_COLUMN_IFRAME', 4);
+
+/** Base class for all editors. The editor takes on the role of view
+ and controller and MVC parlance.
+*/
+class Editor
+{
+
+    /** Check the task param and try to run the corresponding
+     function, if it exists. Gives an error otherwise.
+    */
+    function run() 
+    {
+        $task = param('task','view');
+        
+        $str = "{$task}Write";
+        if(method_exists($this, $str)) {
+            $this->$str();
+        }
+        else {
+            echo "Unknown task: $task";
+        }
+    }
+
+    /**
+     Output a correctly formated action menu, given a set of links as input.
+    */
+    function actionMenu($link_list) 
+    {
+        echo "<div class='action_menu'>\n";
+        echo "<ul>\n";
+        if( count($link_list)) {
+            echo  "<li><h2>Actions</h2></li>\n";
+        
+            foreach($link_list as $link) {
+                
+                echo "<li>";
+                echo $link;
+                echo "</li>\n";
+            }
+        }
+        
+        echo $this->action_box();
+
+        echo "</ul>\n";
+        echo "</div>\n";
+					
+    }
+
+    /** A function to output the basic page layout given a set of menu
+     items and content for the main pane.
+    */
+    function show($action_menu, $content)
+    {
+        $this->actionMenu($action_menu);
+
+        echo "<div class='content'>";
+        echo "<div class='content_inner'>";
+		
+        echo $content;
+
+
+        echo "<div class='content_post'>";
+        echo "</div>";
+        echo "</div>";
+        echo "</div>";
+    }
+
+    function action_box() 
+    {
+        $latest_id = db::fetchList("select ci_log.ci_id from ci_log join ci on ci_log.ci_id = ci.id where ci.deleted=false group by ci_id order by max(create_time) desc limit 10");
+        foreach($latest_id as $row) {
+            $id_arr[] = $row['ci_id'];
+        }
+
+        //var_dump($latest_id);
+
+        /*
+         Don't show latest revisions when in history mode - it's confusing to have two different timelines...
+        */
+        if(param('revision_id') === null && !$this->isAdmin() && !$this->isHelp()) {
+                    
+            $items = ci::fetch(array('id_arr'=>$id_arr));
+            $res .= "\n<li><h2>Latest edits</h2></li>\n\n";
+            
+            foreach($id_arr as $id) {
+                $ci = $items[$id];
+                if ($ci) {
+                    $res .= "<li>";
+                    $res .= makeLink(makeUrl(array('action'=>'ci', 'id'=>$ci->id, 'task'=>null)), $ci->getDescription());
+                    $res .= "</li>\n";
+                }
+            }
+        }
+        
+        return $res;
+    }
+    
+    function isAdmin() 
+    {
+	    return false;
+    }
+    
+    function isHelp() 
+    {
+	    return false;
+    }
+    
+	
+}
+
+class AdminEditor
+extends Editor
+{
+
+	function show($content)
+	{
+		Editor::show(
+			array(makeLink("?action=ci_type", "Edit CI types", null),
+			      makeLink("?action=ci_column", "Edit CI columns", null)),
+			$content);
+
+	}
+	
+	
+	function viewWrite()
+	{
+		$title = "Administration";
+		
+		setTitle($title);
+		$content .= "<h1>$title</h1>";
+		
+		$content .= "<ul><li>".makeLink("?action=ci_type", "Edit CI types", null)."</li>";
+		$content .= "<li>".makeLink("?action=ci_column", "Edit CI columns", null)."</li>";
+		$content .= "</ul>";
+	
+
+		$this->show($content);
+	}
+	
+    function isAdmin() 
+    {
+	    return true;
+    }
+    
+}
+
+class HelpEditor
+extends Editor
+{
+	
+	function viewWrite()
+	{
+		$content = "There is no help";
+		
+		$this->show(array(),$content);
+		
+	}
+	
+
+	function isHelp()
+	{
+		return true;
+		
+	}
+	
+}
+
+
+class FormEditor
+extends Editor
+{
+    function addColumnListItemWrite() 
+    {
+        $column_id=param('column_id');
+        $value=param('value');
+        
+        $query = "insert into ci_column_list (ci_column_type_id, name) values (:column_id, :value)";
+        $param = array(':column_id'=>$column_id, ':value'=>$value);        
+        
+        db::query($query, $param);
+        
+        $this->viewWrite();
+    }
+
+    function updateColumnListItemWrite() 
+    {
+        $id=param('id');
+        $value=param('value');
+        
+        $query = "update ci_column_list set name=:value where id=:id";
+        $param = array(':id'=>$id, ':value'=>$value);        
+			
+        db::query($query, $param);
+			
+        $this->viewWrite();
+    }
+
+    function removeColumnListItemWrite() 
+    {
+        $column_id=param('column_id');
+        $id=param('id');
+
+        $query = "update ci_column_list set deleted=true where id=:id and ci_column_type_id=:column_id";
+        $param = array(':column_id'=>$column_id, ':id'=>$id);        
+        
+        db::query($query, $param);
+        
+        $this->viewWrite();
+    }
+    
+    function viewWrite()
+    {
+        ob_end_clean();
+        foreach(ciColumnList::getItems(param('column_id')) as $id => $name) {
+            
+            echo "$id\t$name\n";
+        }
+        exit(0);
+    }
+
+    function fetchListTableWrite()
+    {
+        ob_end_clean();
+        echo form::makeColumnListEditor(param('column_id'), param('select_id'), param('table_id'));
+        exit(0);
+    }
+
+}
+
+class CsvEditor
+extends Editor
+{
+    
+    function viewWrite()
+    {
+        
+    }
+
+}
+
+
+?>
