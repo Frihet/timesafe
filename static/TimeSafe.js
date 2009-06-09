@@ -11,13 +11,6 @@ window.onload = function(evt) {
     };
 }
 
-function stripe() {
-    $('.striped > tbody > tr:odd > td, .striped > tbody > tr:odd > th'
-      ).addClass('odd');
-    $('.striped > tbody > tr:even > td, .striped > tbody > tr:even > th'
-      ).removeClass('odd');
-}
-
 String.prototype.stripHTML = function () {
     return this.replace(/<[^>]*>/g, "");
 }
@@ -60,6 +53,10 @@ var TimeSafe = {
 	}
 	
 	TimeSafe.currentSidebar = newSidebar;
+	if (!newSidebar.init) {
+	    newSidebar.doInit();
+	    newSidebar.init = true;
+	}
 	TimeSafe.currentSidebar.style.display="block";
     },
 
@@ -70,10 +67,10 @@ var TimeSafe = {
 	}
     },
 
-
-    slotHandleArrowKeys: function(evt, input_id) {
+    slotHandleArrowKeys: function(evt) {
 	evt = (evt) ? evt : ((window.event) ? event : null);
 	if (evt) {
+	    input_id = evt.target.id;
 	    var el=null;
 	    var id_data_str = $('#'+input_id)[0].id.split('_');
 	    var id_data=[parseInt(id_data_str[1]), parseInt(id_data_str[2]), parseInt(id_data_str[3]) ];
@@ -119,7 +116,19 @@ var TimeSafe = {
 	    }
 	    
 	    if (el) {
-		el.focus();
+		/*
+		  If we found a hidden node, recursively call ourselves
+		 */
+		var row = el;
+		while(row && row.nodeName.toLowerCase() != 'tr') {
+		    row=row.parentNode;
+		}
+		if(row && row.style.display=='none') {
+		    TimeSafe.slotHandleArrowKeys({'target':el, 'keyCode':evt.keyCode});
+		}
+		else {
+		    el.focus();
+		}
 	    }
 	}
     },
@@ -273,7 +282,8 @@ var TimeSafe = {
 	for( var line = 0; line < TimeSafe.projectLines; line++) {
 	    for (var slot = 0;; slot++) {
 		var idStr = "" + line + "_" + slot + "_" + day;
-		var tmInput = $('#time_' + idStr)[0];
+		/* This is called so often that it becomes performance critical - avoid jQuery... */
+		var tmInput = document.getElementById('time_' + idStr);
 		if (tmInput == null) {
 		    break;
 		}
@@ -286,19 +296,23 @@ var TimeSafe = {
 	return tm;
     },
 
+    eventStopper: function(event){
+	event.stopPropagation();
+    },
     /**
        Make an input cell with the fancy popup dialog and everything else
      */
     makeTimeInput: function(project, slot, day) {
+	//return document.createElement('span');
 
 	if (TimeSafe.inputTemplate == null) {
-
+	    
 	    TimeSafe.inputTemplate = document.createElement('span');
 	    
 	    var inp = document.createElement('input');
 	    inp.className = "time";
 	    inp.setAttribute('autocomplete','off');
-
+	    
 	    TimeSafe.inputTemplate.appendChild(inp);
 	    
 	    var anch = document.createElement('div');
@@ -309,61 +323,71 @@ var TimeSafe = {
 
 	    anch.appendChild(sidebar);
 	    
-	    var sidebarContent = document.createElement('div');
-	    sidebar.appendChild(sidebarContent);
-
 	    TimeSafe.inputTemplate.appendChild(anch);
 	    
 	}
 	
 	var res = TimeSafe.inputTemplate.cloneNode(true);
 	var currentLine = project.line;
-	var sidebarId = 'sidebar_' + currentLine + "_" + slot + "_" + day;
 	var idStr = "" + currentLine + "_" + slot + "_" + day;
-	res.onclick=function(event){event.stopPropagation();};
+	var sidebarId = 'sidebar_' + idStr;
+	res.onclick=TimeSafe.eventStopper;
 
 	var input = res.childNodes[0];
 	input.onchange=function(){TimeSafe.validate(idStr);TimeSafe.showSum(day);};
 	input.onfocus=function(){TimeSafe.sidebarShow(sidebarId);};
-	input.onkeypress=function(event){TimeSafe.slotHandleArrowKeys(event, 'time_' + idStr);};
+	input.onkeypress=TimeSafe.slotHandleArrowKeys;
 	input.id="time_" + idStr;
 	input.name="time_" + idStr;
 	
-	var anchor = res.childNodes[1];
-	var sidebar = anchor.childNodes[0];
-	var sidebarContent = sidebar.childNodes[0];
-	sidebar.id=sidebarId;
-	
-	var tags = (project.slot[slot] && project.slot[slot][day]) ? project.slot[slot][day]._tags : [];
-	var tagSelect = TimeSafe.makeTagSelect(project, tags);
-	tagSelect.onchange=function(){TimeSafe.validate(idStr);};
-	tagSelect.name = "tag_" + idStr + "[]";
-	tagSelect.id = "tag_" + idStr;
-	sidebarContent.appendChild(tagSelect);
-	
-	var description = document.createElement('textarea');
-	description.name = "description_" + idStr;
-	description.id = description.name;
-	description.onchange=function(){TimeSafe.validate(idStr);};
-	description.className= "description"
-	description.rows = 10;
-	sidebarContent.appendChild(description);
-	
-	var notification = document.createElement('span');
-	notification.id = "notification_" + idStr;
-	sidebarContent.appendChild(notification);
-	
 	if(project.slot[slot] && project.slot[slot][day]) {
 	    input.value=TimeSafe.formatTime(project.slot[slot][day].minutes);
-	    description.value=project.slot[slot][day].description;
-	    
-	    var entryId = document.createElement('input');
-	    entryId.type='hidden';
-	    entryId.name='entry_id_' + idStr;
-	    entryId.value=project.slot[slot][day].id;
-	    anchor.appendChild(entryId);
-	}	
+	}
 	
+	var anchor = res.childNodes[1];
+	var sidebar = anchor.childNodes[0];
+	sidebar.id=sidebarId;
+	/*
+	  We delay as much of the table creation as possible, because
+	  it is already painfully slow. With a bit of work, we could
+	  reduce creation further by not creating the div nodes here
+	  either, but sidebarShow would have to be rewritten in that
+	  case.
+	*/
+	sidebar.doInit=function(){
+	    
+	    var tags = (project.slot[slot] && project.slot[slot][day]) ? project.slot[slot][day]._tags : [];
+	    var sidebarContent = document.createElement('div');
+	    sidebar.appendChild(sidebarContent);
+
+	    var tagSelect = TimeSafe.makeTagSelect(project, tags);
+	    tagSelect.onchange=function(){TimeSafe.validate(idStr);};
+	    tagSelect.name = "tag_" + idStr + "[]";
+	    tagSelect.id = "tag_" + idStr;
+	    sidebarContent.appendChild(tagSelect);
+	    
+	    var description = document.createElement('textarea');
+	    description.name = "description_" + idStr;
+	    description.id = description.name;
+	    description.onchange=function(){TimeSafe.validate(idStr);};
+	    description.className= "description"
+	    description.rows = 10;
+	    sidebarContent.appendChild(description);
+	    
+	    var notification = document.createElement('span');
+	    notification.id = "notification_" + idStr;
+	    sidebarContent.appendChild(notification);
+	    
+	    if(project.slot[slot] && project.slot[slot][day]) {
+		description.value=project.slot[slot][day].description;
+		
+		var entryId = document.createElement('input');
+		entryId.type='hidden';
+		entryId.name='entry_id_' + idStr;
+		entryId.value=project.slot[slot][day].id;
+		anchor.appendChild(entryId);
+	    }	
+	}
 	return res;
     },
 
@@ -386,18 +410,23 @@ var TimeSafe = {
        Add the slot with the specified index from the specified
        project. If slot index is null, an empty new slot is created.
      */
-    addProjectSlot : function (project, slotIdx)
+    addProjectSlot : function (tbody, project, slotIdx)
     {
 	if (slotIdx == null) {
 	    slotIdx = project.slot.length;
 	    project.slot[slotIdx]=[];
 	}
 	
-	var tbody = $('#time_body')[0];
-	
 	//	var row = tbody.insertRow(slotIdx==0?tbody.rows.length:TimeSafe.findFirstRow(project)+slotIdx);	
-	var row = tbody.insertRow(slotIdx==0?tbody.rows.length:TimeSafe.findFirstRow(project)+slotIdx);	
-	
+	var row = tbody.insertRow(slotIdx==0?tbody.rows.length:TimeSafe.findFirstRow(project)+slotIdx);
+	if(project.slot[slotIdx].length == 0 && !project.is_new) {
+	    row.className = "default_invisible";
+	    row.style.display='none';
+	}
+	else {
+	    row.className = "default_visible";
+	}
+
 	row.addCell = function (content, className, id) {
 	    var c = document.createElement('td');
 	    if (className) {
@@ -413,13 +442,13 @@ var TimeSafe = {
 	row.addCell(TimeSafe.makeText('project_'+project.line,
 				      slotIdx==0?project.project_name:""),
 		    'project');
+	row.id = "row_" + project.line + "_" + slotIdx;
 
 	if(slotIdx ==0) {
 	    var link = document.createElement('a');
 	    link.innerHTML = '+';
 	    link.onclick = function(event) {
-		TimeSafe.addProjectSlot(project);
-		//stripe();
+		TimeSafe.addProjectSlot(tbody, project);
 	    };
 	    row.addCell(link);
 	}
@@ -439,9 +468,8 @@ var TimeSafe = {
     /**
        Add table rows for all the slots in the specified project
      */
-    addProject : function (project)
+    addProject : function (tbody, project)
     {
-	var tbody = $('#time_body')[0];
 	project.line = TimeSafe.projectLines;
 	
 	if (project.slot.length == 0) {
@@ -449,8 +477,7 @@ var TimeSafe = {
 	}
 
 	for(var i=0; i<project.slot.length; i++) {
-	    
-	    TimeSafe.addProjectSlot(project, i);
+	    TimeSafe.addProjectSlot(tbody, project, i);
 	}
 	
 	var projectId = document.createElement('input');
@@ -467,18 +494,27 @@ var TimeSafe = {
     addProjectLines : function()
     {
 	var doc = $('.content')[0];
-	doc.style.display='none';
+	var tbody = document.createElement('tbody');
+	tbody.id = 'time_body';
 	var d = TimeSafeData.projects;
 	for(var i = 0; i<d.length; i++) {
-	    TimeSafe.addProject(d[i]);
+	    TimeSafe.addProject(tbody, d[i]);
 	}
+	$('#time')[0].appendChild(tbody);
 	for(var i = 0; i<TimeSafeData.days; i++) {
 	    TimeSafe.showSum(i);
 	}
-	stripe();
-	doc.style.display='block';
+	$('#show_all')[0].checked = false;
+    },
+    
+    updateVisibility: function()
+    {
+	if($('#show_all')[0].checked) {
+	    $('tr.default_invisible').show();
+	} else {
+	    $('tr.default_invisible').hide();
+	}
     }
-
 };
 
 

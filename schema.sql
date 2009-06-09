@@ -8,6 +8,9 @@ drop table tr_project;
 create table tr_project
 (
 	id serial not null primary key,
+	egs_id int,
+	start_date date,
+	external boolean not null default false,
 	name varchar(64) not null,
 	open boolean not null default true
 );

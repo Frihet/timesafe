@@ -1,6 +1,5 @@
 <?php
 
-
 require_once('common/index.php');
 require_once("model.php");
 
@@ -15,6 +14,8 @@ extends Application
         $this->addStyle('static/TimeSafe.css');
         User::init();
         
+        require_once('egs.php');
+
     }
     
     

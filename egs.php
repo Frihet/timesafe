@@ -1,20 +1,19 @@
 <?php
 
-
-
+  /**
+   Project syncing with Egs. 
+  */
 class Egs
 {
 
-    function __construct() 
+    function __construct($dsn) 
     {
-        
+        dbMaker::makeDb('egsDb');        
+        if(!egsDb::init($dsn) ) {
+            die("EGS database problem. Could not connect to the database.");
+        }        
     }
 
-    function accessString($table = 'project',$field='owner') 
-    {
-        return " AND {$table}.{$field} like " . $this->userWildcard();
-    }
-  
     function userWildcard()
     {
         $u = User::$user->name;
@@ -23,41 +22,57 @@ class Egs
             $sub = substr($u, 0, 4);
         }
         
-        $res = "'" . $this->db->escapeSimple($sub) . "%'";
-        return $res;
-        
+        return $sub. "%";
     }
-
-
-
-
+    
     function getProjects() {
         // Build query
-        $query = "SELECT project.id, project.name FROM project, projectaccess WHERE project.archived='f' AND project.id=projectaccess.projectid";
-        
+        $query = "
+select p.id, p.name, p.startdate as start_date, owner
+from project p
+where p.archived='f'
+    and p.owner like :user_wildcard
+order by name
+";
         // Limit users to the same class of users as currently logged in
-        $query .= $this->access_string();
+        $param = array(':user_wildcard' => $this->userWildcard());
         
-        $query .= " ORDER BY name";
-        
-        // Query database
-        $res =& $this->db->query($query);
-        if (PEAR::isError($res)) {
-            print "<pre>$query</pre>";
-            die ($res->getMessage());
-        }
         // Fill users array
         $projects = array();
-        while ($res->fetchInto ($row, DB_FETCHMODE_ASSOC)) {
-            $projects[$row['id']] = $row['name'];
+        foreach(egsDb::fetchList($query, $param) as $row) {
+            $projects[$row['id']] = $row;
         }
-        
         return $projects;
-  }
+    }
 
-    
+    function main()
+    {
+        $egs = $this->getProjects();
+        $map = Project::getEgsMapping();
+        
+        foreach($egs as $egs_id => $egs) {
+            $external = preg_match('/^Div[1-7][a-gA-G]? *[:-]/',$egs['name'])?'f':'t';
+
+            if( array_key_exists($egs_id, $map) ) {
+                if(param('reload_projects')==1) {
+                    Project::update($map[$egs_id],
+                                    $egs['name'],
+                                    $egs_id, 
+                                    $egs['start_date'],
+                                    $external);
+                }
+                continue;
+            }
+            Project::add($egs['name'], 
+                         $egs_id, 
+                         $egs['start_date'],
+                         $external);
+        }
+    }
 
 }
 
+$egs = new Egs(EGS_DSN);
+$egs->main();
 
 ?>

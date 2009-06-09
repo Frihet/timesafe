@@ -1,10 +1,8 @@
 =TODO=
 
 ==FEATURES==
-EGS: Export egs info on owned projects
-EGS: project visibility
 EGS: time report integration
-EGS:check that external work is billable
+EGS: check that external work is billable
 allow overriding user identity
 server side error detection
 
@@ -13,7 +11,6 @@ Don't delete tag groups, only stop showing them
 
 ==FUTURE VERSION FEATURES==
 allow selecting multiple cells
-
 
 =DONE=
 
@@ -42,5 +39,11 @@ Better visual hint for weekends
 
 ==2009-06-08==
 update framework code
+Start EGS work
 
+==2009-06-09==
+Major performance improvement: Delay sidebar creation until it is to be shown
+project visibility
+EGS: mark projects as external/internal
+update tags depending on external/internal status
 

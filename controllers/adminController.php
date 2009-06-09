@@ -25,7 +25,7 @@ extends Controller
         $form .= "</tr>";
         $idx = 0;
 
-        $project_values = array('all' => 'All','internal'=>'All internal','external'=>'All external')+Project::getProjects();
+        $project_values = array('all' => 'All','internal'=>'All internal','external'=>'All external')+Project::getProjectNames();
         $group_values = array('none' => 'None')+TagGroup::getTagGroups();
         
         $hidden = array('action'=>'admin','task'=>'saveTag');

@@ -9,6 +9,8 @@ define('TR_VISIBILITY_INTERNAL',1);
 define('TR_VISIBILITY_EXTERNAL',2);
 define('TR_VISIBILITY_ALL',3);
 
+
+
 class Entry
 extends DbItem
 {
@@ -21,7 +23,7 @@ extends DbItem
     var $perform_date;
     var $_tags = array();
     static $_items;
-
+    
     /**
      Save this time entry to db. 
      */
@@ -50,6 +52,9 @@ extends DbItem
 
     function delete()
     {
+        db::query('delete from tr_tag_map where entry_id=:id',
+                  array(':id'=>$this->id));
+        
         db::query('delete from tr_entry where id=:id',
                   array(':id'=>$this->id));
             
@@ -143,7 +148,14 @@ order by perform_date", array(':username'=>User::$me->name,
 
 
 class Project
+extends dbItem
 {
+    var $id;
+    var $egs_id;
+    var $start_date;
+    var $external;
+    var $name;
+    
     static $_items;
         
     function getProjects() 
@@ -152,23 +164,74 @@ class Project
         return Project::$_items;
     }
     
+    function getProjectNames() 
+    {
+        Project::_load();
+        $res = array();
+        
+        foreach(Project::$_items as $project) {
+            $res[$project->id] = $project->name;
+        }
+        return $res;
+    }
+    
     function _load()
     {
         if (Project::$_items) {
             return;
         }
-        foreach(db::fetchList("select id, name from tr_project where open=true") as $row) {
-            Project::$_items[$row['id']] = $row['name'];
+        foreach(db::fetchList("
+select id, name, egs_id, 
+    extract(epoch from start_date) as start_date, 
+    case when external='t' then 1 else 0 end as external 
+from tr_project 
+where open=true 
+order by name") as $row) {
+            $p = new Project();
+            $p->initFromArray($row);
+            Project::$_items[$p->id] = $p;
+        }        
+    }
+    
+    function getEgsMapping()
+    {
+        $mapping = array();
+        foreach(db::fetchList("select id, egs_id from tr_project where open=true") as $row) {
+            $mapping[$row['egs_id']] = $row['id'];
         }
-        
+        return $mapping;
     }
     
     function getName($id) 
     {
         Project::_load();
+        return Project::$_items[$id]->name;
+    }
+    
+    function getProject($id) 
+    {
+        Project::_load();
         return Project::$_items[$id];
     }
     
+    function add($name, $egs_id, $start_date, $external) 
+    {
+        db::query('insert into tr_project (name, egs_id, start_date, external) values (:name, :value, :d, :ext)',
+                  array(':name'=>$name, ':value'=>$egs_id,
+                        ':d'=>$start_date,
+                        ':ext'=>$external));
+    }
+  
+    function update($id, $name, $egs_id, $start_date, $external) 
+    {
+        db::query('update tr_project set name=:name, egs_id=:value, start_date=:d, external=:ext where id=:id',
+                  array(':name'=>$name, 
+                        ':value'=>$egs_id,
+                        ':d'=>$start_date,
+                        ':id'=>$id,
+                        ':ext'=>$external));        
+    }    
+  
 }
 
 class Tag
@@ -218,8 +281,17 @@ values
         $tag_list = self::fetch();
         
         $out = array();
+        $project_external = Project::getProject($project_id)->external;
+        
         foreach($tag_list as $tag) {
-            if ($tag->project_id == null || $tag->project_id == $project_id) {
+            $vis = $tag->visibility;
+
+            $show = ($project_external && ($vis == TR_VISIBILITY_EXTERNAL)) ||
+            (!$project_external && ($vis == TR_VISIBILITY_INTERNAL)) ||
+            ($vis == TR_VISIBILITY_ALL) ||
+            ($vis == TR_VISIBILITY_PROJECT && $tag->project_id == $project_id);
+            
+            if ($show) {
                 $out[] = $tag;//array($tag->id, $tag->name);
             }
         }

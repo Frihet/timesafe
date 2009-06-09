@@ -41,11 +41,13 @@ extends Controller
     function populateTimeSlots()
     {
         $res = array();
-        foreach( Project::getProjects() as $project_id => $project_name) {
+        foreach( Project::getProjects() as $project_id => $orig) {
             $project = null;
             $project->project_id = $project_id;
-            $project->project_name = $project_name;
+            $project->project_name = $orig->name;
             $project->slot = array();
+            $project->is_new = $orig->start_date> (time()-3600*24*7*4);
+            
             $res[$project_id] = $project;
         }
         
@@ -91,10 +93,10 @@ extends Controller
         $next = self::nextBaseDateStr();
         $prev = self::prevBaseDateStr();
         
-        $form .= "<p><a href='?date=$prev'>«earlier</a> <a href='?date=$next'>later»</a></p>";
+        $content .= "<p><a href='?date=$prev'>«earlier</a> <a href='?date=$next'>later»</a></p>";
+        $content .= "<p><input type='checkbox' id='show_all' onchange='TimeSafe.updateVisibility();'/><label for='show_all'>Show all projects</label></p>";
         
-
-        $form .= "<table class='striped time'><thead><tr>";
+        $form .= "<table id='time' class='time'><thead><tr>";
         $dates = $this->generateDates();
         
         $form .= "<th></th>";
@@ -114,7 +116,7 @@ extends Controller
         $time_slots = $this->populateTimeSlots();
         
         $project_idx = 0;
-        $form .= "</tr></thead>\n<tbody id='time_body'></tbody>\n";
+        $form .= "</tr></thead>\n<tbodyy id='time_bodyy'></tbodyy>\n";
 
         $form .= "<tfoot>\n<tr>\n<th>Sum</th><td>";
         
@@ -148,6 +150,7 @@ extends Controller
         
         $content .= form::makeForm($form,array('action'=>'trEditor', 'task'=>'save'));
         //        $content .= $this->entryListRun();
+        //$content .= "<button type='button' onclick='TimeSafe.addProjectLines();'>Add</button>";
         
         $this->show(null, $content);
 
@@ -211,7 +214,11 @@ extends Controller
 
     function saveRun()
     {
-        
+        /*
+        echo "<pre>";
+        print_r($_REQUEST);
+        exit(1);
+        */
         for($project_idx=0; ($project_id = param("project_$project_idx"))!== null; $project_idx++) {
             
             for ($slot_idx = 0;; $slot_idx++) {
@@ -232,7 +239,10 @@ extends Controller
                     if ($time === null) {
                         break;
                     }
-                    if ($time == '' || $time == 0) {
+
+                    $minutes = util::unformatTime($time);
+
+                    if ($minutes == 0) {
                         if($entry_id >= 0) {
                             $e = new Entry();
                             $e->id = $entry_id;
@@ -240,8 +250,15 @@ extends Controller
                         }
                         continue;
                     }
+                    /** If there is no description, then we have no
+                     complete entry. This is likely because the
+                     sidebar was never created for this entry. Move
+                     on.
+                     */
+                    if ($description === null) {
+                        continue;
+                    }
                     
-                    $minutes = util::unformatTime($time);
                     
                     $e = new Entry();
                     $e->initFromArray(array('id'=>$entry_id>=0?$entry_id:null,
