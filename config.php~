@@ -1,5 +1,0 @@
-<?php
-define('DB_DSN', 'pgsql:dbname=freecode;host=localhost');
-define('DB_USER', 'freecode');
-define('DB_PASSWORD', 'SmurfeCode');
-?>
