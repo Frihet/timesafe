@@ -48,6 +48,7 @@ create table tr_tag
 	visibility int not null,
 	project_id int references tr_project(id),
 	group_id int references tr_tag_group(id),
+	recommended boolean not null default false,
 	deleted boolean not null default false
 );	
 

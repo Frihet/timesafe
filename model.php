@@ -243,6 +243,7 @@ extends DbItem
     var $visibility;
     var $project_id;
     var $group_id;
+    var $recommended;
     
     static $_tag_cache;
 
@@ -250,23 +251,29 @@ extends DbItem
     {
                 $query = "
 update tr_tag
-set name=:name, project_id = :project_id, visibility=:visibility, group_id=:group_id
+set name=:name, project_id = :project_id, visibility=:visibility, group_id=:group_id, recommended=:r
 where id= :id
 ";
-                db::query($query, array(':name'=>$this->name,':id'=>$this->id,':project_id'=>$this->project_id, ':visibility'=>$this->visibility, ':group_id'=>$this->group_id));
+                db::query($query, array(':name'=>$this->name,
+                                        ':id'=>$this->id,
+                                        ':project_id'=>$this->project_id, 
+                                        ':visibility'=>$this->visibility,
+                                        ':group_id'=>$this->group_id, 
+                                        ':r'=>$this->recommended?'t':'f'));
     }
     
     function create()
     {
         db::query("
 insert into tr_tag
-(name, project_id, visibility, group_id)
+(name, project_id, visibility, group_id, recommended)
 values
-(:name, :project_id, :visibility, :group_id)", 
+(:name, :project_id, :visibility, :group_id, :r)", 
                   array(':name'=>$this->name, 
                         ':project_id'=>$this->project_id,
                         ':visibility'=>$this->visibility,
-                        ':group_id'=>$this->group_id)
+                        ':group_id'=>$this->group_id,
+                        ':r'=>$this->recommended?'t':'f')
                   );
     }
     
@@ -350,12 +357,12 @@ extends DbItem
 
     function update() 
     {
-                $query = "
+        $query = "
 update tr_tag_group
 set name=:name, required = :required
 where id= :id
 ";
-                db::query($query, array(':name'=>$this->name,':id'=>$this->id,':required'=>$this->required?'t':'f'));
+        db::query($query, array(':name'=>$this->name,':id'=>$this->id,':required'=>$this->required?'t':'f'));
     }
     
     function create()
@@ -365,12 +372,12 @@ insert into tr_tag_group
 (name, required)
 values
 (:name, :required)", array(':name'=>$this->name, ':required'=>$this->required?'t':'f'));
-        
     }
     
-
     function delete($id) 
     {
+        db::query("update tr_tag set group_id=null where group_id=:id", 
+                  array(':id'=>$id));
         db::query("delete from tr_tag_group where id=:id", 
                   array(':id'=>$id));
     }

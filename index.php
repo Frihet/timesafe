@@ -36,20 +36,17 @@ extends Application
         echo "<ul>\n";
  
         echo "<li>";
-	echo makeLink("?action=trEditor", "Time registration", $is_tr?'selected':null);
+	echo makeLink("?controller=trEditor", "Time registration", $is_tr?'selected':null);
         echo "</li>\n";
 
         echo "<li>";
-	echo makeLink("?action=admin", "Administration", $is_admin?'selected':null);
+	echo makeLink("?controller=admin", "Administration", $is_admin?'selected':null);
         echo "</li>\n";
         
         echo "<li>";
-	echo makeLink("?action=help", "Help", $is_help?'selected':null);
+	echo makeLink("?controller=help", "Help", $is_help?'selected':null);
         echo "<li>";
-        /*
-         echo makeLink("?action=logout", "Log out", null);
-        echo "</li>\n";
-        */
+        
         echo "</ul></div></div>\n";
     }
 

@@ -38,16 +38,18 @@ String.prototype.parseTimeNazi = function ()
 
 var TimeSafe = {
 
-    projectLines : 0,
-    error : {},
-    currentSidebar : null,
+    projectLines: 0,
+    error: {},
+    warning: {},
+    currentSidebar: null,
+    entryIdLookup: {},
 
     sidebarShow: function(id) {
 	var newSidebar = $('#'+id)[0];
 	if (!newSidebar) { 
 	    return;
 	}
-
+	
 	if (TimeSafe.currentSidebar != null) {
 	    TimeSafe.currentSidebar.style.display='none';
 	}
@@ -59,7 +61,7 @@ var TimeSafe = {
 	}
 	TimeSafe.currentSidebar.style.display="block";
     },
-
+    
     sidebarHide: function() {
 	if (TimeSafe.currentSidebar != null) {
 	    TimeSafe.currentSidebar.style.display='none';
@@ -163,8 +165,13 @@ var TimeSafe = {
 		if(sel.options[i].selected) 
 		    selCount[tag.group_id]++;
 	    }
+	    
+	    if(tag.recommended && !sel.options[i].selected) {
+		TimeSafe.notify(id, 'The "' + tag.name+ '" tag should usually be selected.');
+		TimeSafe.warning[id] = 1;
+	    }
 	}
-	
+
 	$.each(selCount, function (gid, count) {
 		var tg = TimeSafeData.tagGroups[gid];
 		if(count > 1) {
@@ -180,6 +187,7 @@ var TimeSafe = {
 
     validate: function(id)
     {
+	TimeSafe.warning[id] = 0;
 	TimeSafe.error[id] = 0;
 	TimeSafe.notifyClear(id);
 
@@ -213,7 +221,7 @@ var TimeSafe = {
 		    TimeSafe.notify(id, 'Time spent is not an even half hour');
 		}
 	    }
-
+	    
 	    if (description) {
 		var description_value = description.value;//tinyMCE.get('description').getContent();	    
 		if(description_value.stripHTML().trim()=='') {
@@ -223,11 +231,13 @@ var TimeSafe = {
 	    }
 	}
 	
-	$('#td_'+id)[0].className=(TimeSafe.error[id]==1)?"error":"modified";
+	$('#td_'+id)[0].className=(TimeSafe.error[id]==1)?"error":((TimeSafe.warning[id]==1)?"warning":"modified");
 	var errCount = 0;
 	$.each(TimeSafe.error,function(idx,el){errCount += el;});
+	var warnCount = 0;
+	$.each(TimeSafe.warning,function(idx,el){warnCount += el;});
 	$('#save')[0].disabled = errCount > 0;
-	$('#notification_global')[0].innerHTML = (errCount>0)?'There are errors in your hour registration. Please correct them before proceeding':''
+	$('#notification_global')[0].innerHTML = (errCount>0)?'There are errors in your hour registration. Correct them before proceeding':((warnCount>0)?'There are warnings in your hour registration. Make sure that they are ok before proceeding.':'');
     },
 
     formatTime : function(tm)
@@ -342,6 +352,7 @@ var TimeSafe = {
 	
 	if(project.slot[slot] && project.slot[slot][day]) {
 	    input.value=TimeSafe.formatTime(project.slot[slot][day].minutes);
+	    TimeSafe.entryIdLookup[project.slot[slot][day].id] = idStr;
 	}
 	
 	var anchor = res.childNodes[1];
@@ -393,7 +404,7 @@ var TimeSafe = {
 
     /**
        Find the row offset of the first row belonging to the specified project
-     */
+    */
     findFirstRow: function(project) {
 	var res = 0;
 	var d = TimeSafeData.projects;
@@ -405,28 +416,29 @@ var TimeSafe = {
 	}
 	return res;
     },
-
+    
     /**
        Add the slot with the specified index from the specified
        project. If slot index is null, an empty new slot is created.
-     */
+    */
     addProjectSlot : function (tbody, project, slotIdx)
     {
+	var forceVisible=false;
 	if (slotIdx == null) {
+	    forceVisible = true;
 	    slotIdx = project.slot.length;
 	    project.slot[slotIdx]=[];
 	}
 	
-	//	var row = tbody.insertRow(slotIdx==0?tbody.rows.length:TimeSafe.findFirstRow(project)+slotIdx);	
 	var row = tbody.insertRow(slotIdx==0?tbody.rows.length:TimeSafe.findFirstRow(project)+slotIdx);
-	if(project.slot[slotIdx].length == 0 && !project.is_new) {
+	if(!forceVisible && project.slot[slotIdx].length == 0 && !project.is_new) {
 	    row.className = "default_invisible";
 	    row.style.display='none';
 	}
 	else {
 	    row.className = "default_visible";
 	}
-
+	
 	row.addCell = function (content, className, id) {
 	    var c = document.createElement('td');
 	    if (className) {
@@ -462,12 +474,12 @@ var TimeSafe = {
 			(7+j-TimeSafeData.weekendOffset)%7<2?'end_week':null,
 			'td_' + idStr);
 	}
-
+	
     },
     
     /**
        Add table rows for all the slots in the specified project
-     */
+    */
     addProject : function (tbody, project)
     {
 	project.line = TimeSafe.projectLines;
@@ -475,7 +487,7 @@ var TimeSafe = {
 	if (project.slot.length == 0) {
 	    project.slot[0]=[];
 	}
-
+	
 	for(var i=0; i<project.slot.length; i++) {
 	    TimeSafe.addProjectSlot(tbody, project, i);
 	}
@@ -490,7 +502,7 @@ var TimeSafe = {
     
     /**
        Add table rows for all projects in TimeSafeData.projects
-     */
+    */
     addProjectLines : function()
     {
 	var doc = $('.content')[0];
@@ -505,6 +517,12 @@ var TimeSafe = {
 	    TimeSafe.showSum(i);
 	}
 	$('#show_all')[0].checked = false;
+	if(TimeSafeData.entry) {
+	    var e = TimeSafeData.entry;
+	    $('#time_' + TimeSafe.entryIdLookup[e])[0].focus();
+	    TimeSafe.sidebarShow(TimeSafe.entryIdLookup[e]);
+	    //alert('hej');
+	}
     },
     
     updateVisibility: function()
@@ -516,5 +534,4 @@ var TimeSafe = {
 	}
     }
 };
-
 

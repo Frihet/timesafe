@@ -21,6 +21,7 @@ extends Controller
         $form .= "<th>Name</th>";
         $form .= "<th>Project</th>";
         $form .= "<th>Tag Group</th>";
+        $form .= "<th>Recommended</th>";
         $form .= "<th></th>";
         $form .= "</tr>";
         $idx = 0;
@@ -47,6 +48,7 @@ extends Controller
             $form .= "<td>".form::makeText('tag_name_'.$idx,$tag->name)."</td>";
             $form .= "<td>".form::makeSelect('project_id_'.$idx,$project_values, $project_id_or_visibility)."</td>";
             $form .= "<td>".form::makeSelect('tag_group_id_'.$idx,$group_values, $tag->group_id===null?'none':$tag->group_id)."</td>";
+            $form .= "<td>".form::makeCheckbox('recommended_'.$idx, $tag->recommended,'Recommended')."</td>";
             $remove_name = "remove_$idx";
             $form .= "<td><button type='submit' name='$remove_name' value='1'>Remove</button></td>";
             
@@ -57,6 +59,7 @@ extends Controller
         $form .= "<td>".form::makeText('tag_name_new',"")."</td>";
         $form .= "<td>".form::makeSelect('project_id_new',$project_values)."</td>";
         $form .= "<td>".form::makeSelect('tag_group_id_new',$group_values)."</td>";
+        $form .= "<td>".form::makeCheckbox('recommended_new', false, 'Recommended')."</td>";
         $form .= "<td><button type='submit'>Add</button></td>";
         $form .= "</tr>";
         
@@ -90,7 +93,7 @@ extends Controller
 
             $checked_str = $tag_group->required?'checked':'';
             
-            $form .= "<td><input type='checkbox' name='tag_group_required_$idx' id='tag_group_required_$idx' $checked_str value='1'><label for='tag_group_required_$idx'>Required</label></td>";
+            $form .= "<td>".form::makeCheckbox("tag_group_required_$idx",$tag_group->required, "Required")."</td>";
             $remove_name = "remove_$idx";
             $form .= "<td><button type='submit' name='$remove_name' value='1'>Remove</button></td>";
             
@@ -99,7 +102,7 @@ extends Controller
         }
         $form .= "<tr>";
         $form .= "<td>".form::makeText('tag_group_name_new',"")."</td>";
-        $form .= "<td><input type='checkbox' name='tag_group_required_new' id='tag_group_new' value='1'><label for='tag_group_new'>Required</label></td>";
+        $form .= "<td>".form::makeCheckbox('tag_group_required_new', false, 'Required')."</td>";
         $form .= "<td><button type='submit'>Add</button></td>";
         $form .= "</tr>";
         
@@ -120,12 +123,12 @@ extends Controller
         
         while(true) {
             $tag_id_key = "tag_id_$idx";
-            
             if (!array_key_exists($tag_id_key, $_REQUEST)) {
                 break;
             }
             $tag_id = param($tag_id_key);
             $name = param("tag_name_$idx");
+            $recommended = param("recommended_$idx");
             list($project_id, $visibility) = $this->parseProjectId(param("project_id_$idx"));
 
             $tag_group_id = param("tag_group_id_$idx");
@@ -133,13 +136,14 @@ extends Controller
                 $tag_group_id = null;
             }
             
-            
             if (param("remove_$idx")) {
                 Tag::delete($tag_id);
             }
             else {
                 $t = new Tag();
-                $t->initFromArray(array('name'=>$name,'id'=>$tag_id,'project_id'=>$project_id, 'visibility'=>$visibility, 'group_id' => $tag_group_id));
+                $t->initFromArray(array('name'=>$name,'id'=>$tag_id,'project_id'=>$project_id, 'visibility'=>$visibility, 'group_id' => $tag_group_id, 'recommended'=>$recommended));
+                //message("TJOHO $recommended <br>");
+                
                 $t->update();
             }
             
@@ -149,13 +153,14 @@ extends Controller
         $name = param('tag_name_new');
         list($project_id, $visibility) = $this->parseProjectId(param("project_id_new"));
         $tag_group_id = param("tag_group_id_new");
+        $recommended = param("recommended_new");
         if ($tag_group_id == 'none') {
             $tag_group_id = null;
         }
-            
+        
         if ($name) {
             $t = new Tag();
-            $t->initFromArray(array('name'=>$name,'project_id'=>$project_id, 'visibility'=>$visibility, 'group_id' => $tag_group_id));
+            $t->initFromArray(array('name'=>$name,'project_id'=>$project_id, 'visibility'=>$visibility, 'group_id' => $tag_group_id, 'recommended'=>$tag_recommended));
             
             $t->create();
         }

@@ -1,5 +1,5 @@
 
-select
+.sidebar select
 {
     width: 50%;
 }
@@ -16,6 +16,11 @@ input.time
 table .error input.time
 {
     background-color: #f55;
+}
+
+table .warning input.time
+{
+    background-color: #ff5;
 }
 
 table .modified input.time

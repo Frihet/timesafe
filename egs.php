@@ -43,6 +43,9 @@ order by name
             $projects[$row['id']] = $row;
         }
         return $projects;
+        
+        //select p.name, u.username, u.name from project p join resource r on r.projectid=p.id join useroverview u on r.personid=u.id where u.username='nooslilaxe' and p.archived='f';
+
     }
 
     function main()

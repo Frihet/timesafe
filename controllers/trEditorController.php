@@ -142,10 +142,13 @@ extends Controller
             $project_data->tags = tag::getTags($project_data->project_id);
         }
         $form .= json_encode($time_slots);
-
-        $form .= ",\n\ttagGroups: " . json_encode(TagGroup::fetch());
         
-
+        $form .= ",\n\ttagGroups: " . json_encode(TagGroup::fetch());
+        $entry = param('entry');
+        if( $entry) {
+            $form .= ",\n\tentry: " . $entry;
+        }
+        
         $form .= "\n};\nTimeSafe.addProjectLines();\n</script>\n\n";
         
         $content .= form::makeForm($form,array('action'=>'trEditor', 'task'=>'save'));

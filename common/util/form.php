@@ -103,7 +103,18 @@ class form
             $class_str = $class?'class="'.htmlEncode($class).'"':'';
             return "<input $id_str $class_str size='32' name='".htmlEncode($name)."' value='".htmlEncode($value)."'>\n";		
 	}
-	
+    
+    function makeCheckbox($name, $value, $description, $id=null) 
+    {
+        if($id === null) {
+            $id = $name;
+        }
+        if($value===true || $value=='1' || $value=='t') {
+            $checked = 'checked="yes"';
+        }
+        
+        return "<input type='checkbox' name='".htmlEncode($name)."' id='".htmlEncode($id)."' value='1' $checked /><label for='".htmlEncode($id)."'>".htmlEncode($description)."</label>";
+    }
     
     function makeInput($name, $value, $column_id, $read_only=false, $id=null) 
     {
