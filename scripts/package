@@ -1,0 +1,73 @@
+#! /bin/bash
+
+name="$1"
+
+shift
+
+(cd plugins/$name && zip ../../$name.fpl schema.sql schema_drop.sql install.json *.php "$@")
+
+case "$type" in
+
+	 view)
+	 echo -n >views/"${name}"View.php "<?php
+
+class ${name}View
+	extends View
+{
+
+	function render(\$controller)
+	{
+
+	}
+
+}
+
+?>"
+	 ;;
+
+	 controller)
+	 echo -n >controllers/"${name}"Controller.php "<?php
+
+class ${name}Controller
+	extends Controller
+{
+
+    function viewRun()
+    {
+
+    }
+
+}
+
+?>"
+	 ;;
+
+	 plugin)
+	 mkdir plugins/"${name}"
+	 echo -n >plugins/"${name}"/index.php "<?php
+
+class ${name}Plugin
+	extends Plugin
+{
+
+}
+
+?>"
+	 
+	 echo >plugins/"${name}"/event.json "
+[]
+"
+	 
+
+	 ;;
+
+	 *)
+	 echo "Unknown component type '$type'." >&2
+	 exit 1
+	 ;;
+esac
+
+
+	
+
+

@@ -1,0 +1,64 @@
+=TODO=
+
+==FEATURES==
+allow overriding user identity 3h
+server side error detection 3h
+Automatic syncing of user database from ldap 4h
+Performance check, if slow, do performance work 1..24h
+
+==RELEASE==
+Check with Eline if we want tiered rollout, what release schedule she wants, etc.
+
+==BUGS==
+Performance: Still too slow...
+
+==FUTURE VERSION FEATURES==
+allow selecting multiple cells
+Set admin rights in ldap
+Performance: Grouping for VSD
+replace multi-select with radio button groups and checkboxes 8h
+Add a report to show all people who have worked on a project where they are not a resource
+
+=DONE=
+
+==2009-06-03==
+Saving
+allow removal of hours
+Detect missing description
+
+==2009-06-04==
+Refuse to submit on error
+Reverse column order
+Show sum of all hours
+Detect more than 24 hours worked in single day
+Show weekends in red
+Add new project line buttons
+Arrows for moving in history
+
+==2009-06-05==
+Fix bug: re-striping table kills error color
+Performance improvements. Striping way faster. Loading is still slow, though.
+Detect wrong number of tags in tag group
+Show global error hint
+Better visual hint for weekends
+
+==2009-06-08==
+update framework code
+Start EGS work
+
+==2009-06-09==
+Major performance improvement: Delay sidebar creation until it is to be shown
+project visibility
+EGS: mark projects as external/internal
+update tags depending on external/internal status
+
+==2009-06-10==
+TR: basic time report integration
+TR: Company name 
+TR: Title name 
+When deleting tag groups, orphan the tags in the group
+Added 'recommended' to tags
+Added warning functionality
+Warn on missing billable
+TR: time report link to timesafe should open related sidebar 3h
+Time report links for projects should not take you to egs, but to TimeSafe 20m
