@@ -16,7 +16,7 @@
 class Controller
 {
 
-	private $extra_content=array();
+    private $extra_content=array();
 
     /** Check the task param and try to run the corresponding
      function, if it exists. Gives an error otherwise.
@@ -136,7 +136,7 @@ class Controller
 
 	function getContent($position)
 	{
-		return $this->extra_content[$position]?$this->extra_content[$position]:array();
+            return (is_array($this->extra_content) && array_key_exists($position, $this->extra_content))?$this->extra_content[$position]:array();
 	}
 	
 	

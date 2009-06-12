@@ -7,6 +7,17 @@ class form
 {
     static $iframe_id=0;
 
+    function makeSelectList($arr, $val_field, $desc_field)
+    {
+	$res=array();
+	foreach($arr as $it) 
+	{
+	    $res[$it->$val_field] = $it->$desc_field;
+	}
+	return $res;
+    }
+    
+
     /**
      Create a select box with the specified values.
      */

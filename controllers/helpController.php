@@ -1,7 +1,7 @@
 <?php
 
 /**
- The help page
+ The help page. Just display a bunch of info.
  */
 class helpController
 extends Controller
@@ -44,18 +44,20 @@ TimeSafe is a simple tool for reporting hours worked. It is layed out like a spr
 <p>
 To perform time reporting, simply click the cell representing the project and day you wish to report for, and enter the number of hours worked and a description of the work performed. It may also be required to select one or more tags. To select multiple tags, hold the Ctrl key while selecting.
 </p>
-
+<p>
+If you need to report hours to the same project int the same day more than once, e.g. with a different set of tags, you can create an extra line by clicking the «+» right next to the project name. This will create a new, empty row in the form.
+</p>
 ");
 
         $this->add("Project visibility", "
 <p>
-By default, only only newly created projects and projects where you have recently filed hours are visible on the page. To show all projects, click the «Show all projects» checkbox at the top of the registration page.
+By default, only newly created projects and projects where you have recently filed hours are visible on the page. To show all projects, click the «Show all projects» checkbox at the top of the registration page.
 </p>
 ");
         
         $this->add("More on tags", "
 <p>
-Tags are central to the reporting capabilities of TimeSafe. Tags make it possible to locate all billable hors worked on any project. Tags can be divided into tag groups, where at most one tag from a specified group can be selected. These tag groups can optionally require that a tag in the group must be selected.
+Tags are central to the reporting capabilities of TimeSafe. They make it possible to e.g. locate all billable hours worked on any project and other cross-project groupings of hours. Tags can be divided into tag groups, where at most one tag from a specified group can be selected. These tag groups can optionally require that a tag in the group must be selected.
 </p>
 ");
         
@@ -67,7 +69,7 @@ TimeSafe tries to detect invalidly reported hours. The error checks include maki
                        
         $this->add("Speed", "
 <p>
-TimeSafe requires a standards compliant browser to function at all. Because it performs a lot of table manipulation in JavaScript, it will be extremely slow on browsers where such operations are slow, typically on older browsers. If TimeSafe is running slowly, consider updating to the latest browser version.
+TimeSafe is very JavaScript intensive. It requires a standards compliant browser to function at all. Because it performs a lot of table manipulation in JavaScript, it will be extremely slow on browsers where such operations are slow, typically on older browsers. If TimeSafe is running slowly, consider updating to the latest browser version.
 </p>
 ");
 
@@ -75,9 +77,25 @@ TimeSafe requires a standards compliant browser to function at all. Because it p
 <p>
 There are only two types of administrative action possible in TimeSafe - changing tag groups and changing tags. The project list is imported from Egs and can not be edited here.
 </p>
+<p>
+A tag can be visible for all project, all external projects, all internal projects, or only one specific project. Each tag has a dropdown where you can chose tag visibility.
+</p>
+<p>
+Some tags are almost always used. These can be made recommended, in which case TimeSafe will show a warning if the user has not chosen the tag. This can be used e.g. to create a tag to mark external hours as billable.
+</p>
+<p>
+Tags can be put into groups where at most one tag may be chosen. It can be made mandatory to pick one tag in a group, or it can be optional. Toggle the 'required' checkbox of a tag group to choose this. 
+</p>
+
 ");
         
 
+        $this->add("Future features", "
+<p>
+There are loads of features in the TimeSafe pipeline. Before requesting a feature, please make sure that this issue is not reported by checking <a href='https://projects.freecode.no/projects/timesafe/issues'>the issue tracker</a>.
+</p>
+");
+        
             $this->show($this->getActionMenu(),$this->get());
 		
 	}
