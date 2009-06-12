@@ -1,5 +1,8 @@
 <?php
 
+  /** The php backend. Mostly just creates a bunch of json data. All
+   the exciting stuff is JavaScript. Which is scary.
+   */
 class TREditorController
 extends Controller
 {
@@ -14,7 +17,7 @@ extends Controller
         
         for($i=Entry::getDateCount()-1; $i >= 0; $i--) {
             $tm = $mid_day_time - 3600*24*$i;
-            $foo=null;
+            $foo=new stdClass();
             $foo->month = (int)date('m', $tm);
             $foo->year = (int)date('Y', $tm);
             $foo->day = (int)date('d', $tm);
@@ -42,10 +45,11 @@ extends Controller
     {
         $res = array();
         foreach( Project::getProjects() as $project_id => $orig) {
-            $project = null;
+            $project = new StdClass();
             $project->project_id = $project_id;
             $project->project_name = $orig->name;
             $project->slot = array();
+            $project->external = $orig->external;
             $project->is_new = $orig->start_date> (time()-3600*24*7*4);
             
             $res[$project_id] = $project;
@@ -54,11 +58,11 @@ extends Controller
         foreach(Entry::fetch() as $entry) {
             $proj = $res[$entry->project_id];
             $idx = -1;
-            $offset = $entry->getDateOffset();
-            
+            $offset = "".$entry->getDateOffset();
             for ($i=0; $i<count($proj->slot); $i++) {
                 $slot = $proj->slot[$i];
-                if ($slot[$offset] === null) {
+
+                if ($slot && !array_key_exists($offset,$slot)) {
                     $idx = $i;
                     break;
                 }
@@ -89,14 +93,19 @@ extends Controller
     {
         $content = "";
         $form = "";
-        
+	$username = param('user',$_SERVER['PHP_AUTH_USER']);
+	
         $next = self::nextBaseDateStr();
         $prev = self::prevBaseDateStr();
-        
+	$user = form::makeSelect('user', form::makeSelectList(User::getAllUsers(),'name', 'fullname'),$username, null, array('onchange'=>'submit();'));
+	$user_form = form::makeForm($user, array(), 'get');
+
         $content .= "<p><a href='?date=$prev'>«earlier</a> <a href='?date=$next'>later»</a></p>";
+        $content .= $user_form;
+	
         $content .= "<p><input type='checkbox' id='show_all' onchange='TimeSafe.updateVisibility();'/><label for='show_all'>Show all projects</label></p>";
         
-        $form .= "<table id='time' class='time'><thead><tr>";
+	$form .= "<table id='time' class='time'><thead><tr>";
         $dates = $this->generateDates();
         
         $form .= "<th></th>";
@@ -150,9 +159,15 @@ extends Controller
         }
         
         $form .= "\n};\nTimeSafe.addProjectLines();\n</script>\n\n";
+
+        $from=date('Y-m-d',Entry::getBaseDate()-3600*24*(Entry::getDateCount()-1));
+        $to=date('Y-m-d',Entry::getBaseDate());
         
-        $content .= form::makeForm($form,array('action'=>'trEditor', 'task'=>'save'));
-        //        $content .= $this->entryListRun();
+        $content .= form::makeForm($form,array('action'=>'trEditor', 'task'=>'save','user'=>$username));
+	$content .= "<div class='figure'><img src='../time_report/?type=histogram&from=$from&to=$to&users[]=$username' /><em class='caption'>Figure 1: Work performed. Warning! This is the number of hours currently stored on the server. This graph does not reflect any unsaved edits.</em></div>";
+        
+
+	//$content .= $this->entryListRun();
         //$content .= "<button type='button' onclick='TimeSafe.addProjectLines();'>Add</button>";
         
         $this->show(null, $content);
@@ -167,8 +182,7 @@ extends Controller
         $entry_list = Entry::fetch();
         if (!count($entry_list)) {
             return "";
-        }
-        
+        }        
         
         $content .= "
 <table class='striped'>
@@ -178,7 +192,6 @@ extends Controller
 <th>Date</th>
 <th>Time</th>
 <th>Description</th>
-<th></th>
 </tr>
 ";
         foreach ($entry_list as $entry) {
@@ -193,7 +206,7 @@ extends Controller
             }
             $tags = implode(", ", $tags);
             
-            $date = "";
+            $date = date('Y-m-d',$entry->perform_date);
             $time = util::formatTime($entry->minutes);
             $description = $entry->description;
             
@@ -218,9 +231,9 @@ extends Controller
     function saveRun()
     {
         /*
-        echo "<pre>";
-        print_r($_REQUEST);
-        exit(1);
+	 echo "<pre>";
+	 print_r($_REQUEST);
+	 exit(1);
         */
         for($project_idx=0; ($project_id = param("project_$project_idx"))!== null; $project_idx++) {
             
@@ -262,13 +275,12 @@ extends Controller
                         continue;
                     }
                     
-                    
-                    $e = new Entry();
+		    $e = new Entry();
                     $e->initFromArray(array('id'=>$entry_id>=0?$entry_id:null,
                                             'description'=>$description,
                                             'minutes'=>$minutes, 
                                             'project_id'=>$project_id, 
-                                            'user_id'=>User::$me->id,
+                                            'user_id'=>User::$user->id,
                                             'perform_date'=>$perform_date));
                     
                     $e->setTags($tag);
@@ -278,7 +290,7 @@ extends Controller
             }
         }
         message("Hours have been saved");
-        util::redirect(makeUrl());        
+        util::redirect(makeUrl(User::$me!=User::$user?array('user'=>param('user')):array('user'=>null)));        
     }
     
     

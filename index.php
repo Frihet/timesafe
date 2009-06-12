@@ -3,6 +3,8 @@
 require_once('common/index.php');
 require_once("model.php");
 
+require_once('ldap.php');
+
 class MyApp 
 extends Application
 {
@@ -12,9 +14,7 @@ extends Application
         $this->addScript('static/TimeSafe.js');
         //$this->addScript('static/jquery.flot.js');
         $this->addStyle('static/TimeSafe.css');
-        User::init();
-        
-        require_once('egs.php');
+	require_once('egs.php');
 
     }
     

@@ -116,7 +116,7 @@ join tr_user u
 where u.name = :username 
     and perform_date <= :date_end 
     and perform_date >= :date_begin 
-order by perform_date", array(':username'=>User::$me->name,
+order by perform_date", array(':username'=>User::$user->name,
                               ':date_end'=>$date_end,
                               ':date_begin'=>$date_begin));
         
@@ -435,16 +435,56 @@ extends DbItem
 {
     static $me;
     static $user;
+    static $_all=null;
     
-    function init()
+    public $id;
+    public $name;
+    public $fullname;
+
+    function __construct($id, $name, $fullname) 
     {
-        User::$me->id=1;
-        User::$me->name='nooslilaxe';
-        User::$me->fullname='Axel Liljencrantz';
-        User::$user = User::$me;
-        
-        
+	$this->id = $id;
+	$this->name = $name;
+	$this->fullname = $fullname;
     }
+    
+    function getAllUsers()
+    {
+	
+	if( self::$_all)
+	{
+	    return self::$_all;
+	}
+	self::$_all = array();
+	
+	foreach(db::query('select * from tr_user order by fullname') as $row) 
+	{
+	    self::$_all[$row['name']] = new User($row['id'], $row['name'], $row['fullname']);
+	    
+	}
+	return self::$_all;
+    }
+
+    function save() 
+    {
+	//echo "Save {$this->id} {$this->name}<br>";
+	
+	if($this->id !== null) {
+	    db::query('update tr_user set name=:n, fullname=:f where id=:id',
+		      array(':id'=>$this->id,
+			    ':f'=>$this->fullname,
+			    ':n'=>$this->name));
+	    
+	} else {
+	    
+	    db::query('insert into tr_user (name, fullname) values(:n, :f)',
+		      array(':f'=>$this->fullname,
+			    ':n'=>$this->name));
+	    $this->id = db::lastInsertId('tr_user_id_seq');
+	    
+	}
+    }
+    
     
 }
 

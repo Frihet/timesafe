@@ -1,3 +1,6 @@
+/*
+  Some init code to run when page is created
+ */
 window.onload = function(evt) {
     document.onkeypress = function(evt) {
 	evt = (evt) ? evt : ((window.event) ? event : null);
@@ -11,6 +14,9 @@ window.onload = function(evt) {
     };
 }
 
+/**
+   Add a few nice-to-have prototype functions
+ */
 String.prototype.stripHTML = function () {
     return this.replace(/<[^>]*>/g, "");
 }
@@ -35,7 +41,9 @@ String.prototype.parseTimeNazi = function ()
     return NaN;
 }
 
-
+/**
+   We put everything in a TimeSafe namespace, to minimize risk of name clashes
+ */
 var TimeSafe = {
 
     projectLines: 0,
@@ -43,7 +51,10 @@ var TimeSafe = {
     warning: {},
     currentSidebar: null,
     entryIdLookup: {},
-
+    
+    /**
+       Show sidebar with specified id
+     */
     sidebarShow: function(id) {
 	var newSidebar = $('#'+id)[0];
 	if (!newSidebar) { 
@@ -62,6 +73,9 @@ var TimeSafe = {
 	TimeSafe.currentSidebar.style.display="block";
     },
     
+    /**
+       Hide current sidebar, if any
+     */
     sidebarHide: function() {
 	if (TimeSafe.currentSidebar != null) {
 	    TimeSafe.currentSidebar.style.display='none';
@@ -69,6 +83,10 @@ var TimeSafe = {
 	}
     },
 
+    /**
+       Handle arrow keys and excepe key if pressed in one of the cells by moving around.
+       Moving up and down is way harder than it should be. Maybe we could use table row stuff to find previous index?
+     */
     slotHandleArrowKeys: function(evt) {
 	evt = (evt) ? evt : ((window.event) ? event : null);
 	if (evt) {
@@ -135,23 +153,27 @@ var TimeSafe = {
 	}
     },
     
-
+    /**
+       Clear notification area in specified sidebar
+     */
     notifyClear: function(id)
     {
 	var notification = $('#notification_'+id)[0];
 	notification.innerHTML ="";
     },
 
+    /**
+       Add notification in specified sidebar
+     */
     notify:function(id, msg)
     {
 	var notification = $('#notification_'+id)[0];
 	notification.innerHTML += "<div class='error'>" + msg + "</div>";
     },
 
-    isBillable: function(id) {
-	return false;
-    },
-    
+    /**
+       Validate that all tags are filled out correctly
+     */
     validateTags: function(id) {
 	var sel = $('#tag_'+id)[0];
 	var project = TimeSafeData.projects[id.split('_')[0]];
@@ -185,6 +207,9 @@ var TimeSafe = {
 	    });
     },
 
+    /**
+       Validate specified time entry
+     */
     validate: function(id)
     {
 	TimeSafe.warning[id] = 0;
@@ -195,8 +220,6 @@ var TimeSafe = {
 	TimeSafe.validateTags(id);
 
 	var time = $('#time_'+id)[0];
-	var billable = TimeSafe.isBillable(id);
-	
 	var day = id.split('_')[2];
 	var dayWork = TimeSafe.calcSum(day);
 	
@@ -209,19 +232,24 @@ var TimeSafe = {
 	    
 	    var time_val = time.value.parseTimeNazi();
 	    var description = $('#description_'+id)[0];
-	    
 	    var project_idx = id.split('_')[0];
 	    var project_id = $('#project_id_'+project_idx)[0];
+	    var isExternal=TimeSafeData.projects[project_idx].external;
 	    if (isNaN(time_val)) {
 		TimeSafe.error[id] = 1;
 		TimeSafe.notify(id, "Time spent is not a number");
 	    } else { 
-		if (billable && ((2*time_val) != parseFloat(parseInt(2*time_val)))) {
-		    TimeSafe.error[id] = 1;
+		/*
+		  This check is way too FreeCode specific. We should
+		  add a feature for inserting custom cehcks through
+		  the backend and use that. 2.0+...
+		*/
+		if (isExternal && (time_val % 30 != 0)){
+		    TimeSafe.warning[id] = 1;
 		    TimeSafe.notify(id, 'Time spent is not an even half hour');
 		}
 	    }
-	    
+
 	    if (description) {
 		var description_value = description.value;//tinyMCE.get('description').getContent();	    
 		if(description_value.stripHTML().trim()=='') {
@@ -240,6 +268,9 @@ var TimeSafe = {
 	$('#notification_global')[0].innerHTML = (errCount>0)?'There are errors in your hour registration. Correct them before proceeding':((warnCount>0)?'There are warnings in your hour registration. Make sure that they are ok before proceeding.':'');
     },
 
+    /**
+       Format a number of minutes into something suitable for human reading
+     */
     formatTime : function(tm)
     {
 	switch(tm%60) {
@@ -266,6 +297,9 @@ var TimeSafe = {
 	return res;
     },
 
+    /**
+       Make a select box with tags for the specified project
+     */
     makeTagSelect: function(line, selected) {
 	var tags = document.createElement('select');
 	tags.multiple=true;
@@ -283,10 +317,16 @@ var TimeSafe = {
 	return tags;
     },
 
+    /**
+       Update the sum cell for the specified day
+     */
     showSum: function(day) {
 	$('#hour_sum_' + day)[0].innerHTML = TimeSafe.formatTime(TimeSafe.calcSum(day));
     },
 
+    /**
+       Calculate the number of hours worked for the specified day
+     */
     calcSum: function(day) {
 	var tm = 0.0;
 	for( var line = 0; line < TimeSafe.projectLines; line++) {
@@ -306,9 +346,13 @@ var TimeSafe = {
 	return tm;
     },
 
+    /**
+       Event handler that simply stops propagation of event
+     */
     eventStopper: function(event){
 	event.stopPropagation();
     },
+
     /**
        Make an input cell with the fancy popup dialog and everything else
      */
@@ -519,12 +563,18 @@ var TimeSafe = {
 	$('#show_all')[0].checked = false;
 	if(TimeSafeData.entry) {
 	    var e = TimeSafeData.entry;
-	    $('#time_' + TimeSafe.entryIdLookup[e])[0].focus();
-	    TimeSafe.sidebarShow(TimeSafe.entryIdLookup[e]);
-	    //alert('hej');
+	    var e2 = $('#time_' + TimeSafe.entryIdLookup[e])[0];
+	    if(e2) 
+	    {
+		e2.focus();
+	    }
+	    
 	}
     },
     
+    /**
+       Toggle visiblity of unused projects
+     */
     updateVisibility: function()
     {
 	if($('#show_all')[0].checked) {

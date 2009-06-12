@@ -1,23 +1,23 @@
 =TODO=
 
 ==FEATURES==
-allow overriding user identity 3h
 server side error detection 3h
-Automatic syncing of user database from ldap 4h
-Performance check, if slow, do performance work 1..24h
+DC report is b0rked 2h
+Add all projects that you are a resouce for to the default list 2h
+Allow time entry like ':15' instead of '0:15'
 
 ==RELEASE==
-Check with Eline if we want tiered rollout, what release schedule she wants, etc.
 
 ==BUGS==
-Performance: Still too slow...
+If clicking on tr entry for another user than yourself, we get NOTHING
 
 ==FUTURE VERSION FEATURES==
 allow selecting multiple cells
 Set admin rights in ldap
-Performance: Grouping for VSD
+Performance: Don't render invisible rows on startup
 replace multi-select with radio button groups and checkboxes 8h
 Add a report to show all people who have worked on a project where they are not a resource
+easy moving of hours from one cell to another
 
 =DONE=
 
@@ -62,3 +62,17 @@ Added warning functionality
 Warn on missing billable
 TR: time report link to timesafe should open related sidebar 3h
 Time report links for projects should not take you to egs, but to TimeSafe 20m
+
+==2009-06-11==
+Automatic syncing of user database from ldap 
+Performance ok for 1.0 release
+allow overriding user identity 
+
+==2009-06-12==
+time report bar chart in TS
+Illness report is borked 2h
+avspassering is b0rked 2h
+
+==RELEASE==
+We want tiered rollout with me and Eline testing in prod for a few days and rollout to everbody else on a fellesmøte
+

@@ -1,5 +1,9 @@
 <?php
+  /**
+   Form for editing tags and tag groups.
 
+   MAking these simple forms is way more work than it should. More can be automated.
+   */
 class AdminController
 extends Controller
 {
