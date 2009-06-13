@@ -48,6 +48,63 @@ order by name
 
     }
 
+    function updateUser($name)
+    {
+        $query = "
+select p.id, p.name 
+from project p
+join resource r
+on r.projectid=p.id
+join useroverview u
+on u.id=r.personid
+where p.archived = 'f'
+    and u.username = :u
+order by name
+";
+	$param = array(':u'=>$name);
+	$new_res = egsDb::fetchList($query, 
+				    $param);
+	$query="
+select p.id, p.egs_id
+from tr_project p 
+join tr_project_user pu
+on pu.project_id = p.id
+join tr_user u 
+on pu.user_id = u.id
+where u.name = :u";
+	
+	$old_res = db::fetchList($query, $param);
+	$kill = array();
+	foreach($old_res as $res) 
+	{
+	    $kill[$res['egs_id']] = $res;
+	}
+	
+	foreach( $new_res as $res) 
+	{
+	    if( array_key_exists($res['id'],$kill) ) 
+	    {
+		$kill[$res['id']] = null;
+	    }
+	    else 
+	    {
+		db::query('insert into tr_project_user (project_id, user_id) select id, :u from tr_project where egs_id=:p',
+			  array(':u'=>User::$user->id,
+				':p'=>$res['id']));
+	    }
+	}
+	foreach($kill as $row) 
+	{
+	    if($row !== null) 
+	    {
+		db::query('delete from tr_project_user where project_id=:p and user_id=:u',
+			  array(':u'=>User::$user->id,
+				':p'=>$row['id']));
+	    }
+	}
+	
+    }
+    
     function main()
     {
         $egs = $this->getProjects();
@@ -71,6 +128,8 @@ order by name
                          $egs['start_date'],
                          $external);
         }
+	
+	$this->updateUser(User::$user->name);
     }
 
 }

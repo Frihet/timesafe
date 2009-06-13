@@ -50,7 +50,7 @@ extends Controller
             $project->project_name = $orig->name;
             $project->slot = array();
             $project->external = $orig->external;
-            $project->is_new = $orig->start_date> (time()-3600*24*7*4);
+            $project->is_resource = $orig->is_resource;
             
             $res[$project_id] = $project;
         }

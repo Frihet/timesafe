@@ -109,14 +109,12 @@ extends DbItem
         $data = db::fetchList("
 select e.id, project_id, user_id, minutes, 
     extract(epoch from perform_date) as perform_date, 
-    description 
+    description
 from tr_entry e
-join tr_user u
-    on e.user_id = u.id
-where u.name = :username 
+where e.user_id = :user_id 
     and perform_date <= :date_end 
     and perform_date >= :date_begin 
-order by perform_date", array(':username'=>User::$user->name,
+order by perform_date", array(':user_id'=>User::$user->id,
                               ':date_end'=>$date_end,
                               ':date_begin'=>$date_begin));
         
@@ -155,6 +153,7 @@ extends dbItem
     var $start_date;
     var $external;
     var $name;
+    var $is_resource;
     
     static $_items;
         
@@ -181,12 +180,16 @@ extends dbItem
             return;
         }
         foreach(db::fetchList("
-select id, name, egs_id, 
-    extract(epoch from start_date) as start_date, 
-    case when external='t' then 1 else 0 end as external 
-from tr_project 
-where open=true 
-order by name") as $row) {
+select p.id, p.name, p.egs_id, 
+    extract(epoch from p.start_date) as start_date, 
+    case when p.external='t' then 1 else 0 end as external,
+    (select id from tr_project_user pu where pu.user_id=:user_id and pu.project_id = p.id) is not null as is_resource
+from tr_project p
+where p.open=true 
+order by p.name",
+			      array(':user_id'=>User::$user->id)) as $row) {
+	    //message($row['tralala']);
+	    
             $p = new Project();
             $p->initFromArray($row);
             Project::$_items[$p->id] = $p;

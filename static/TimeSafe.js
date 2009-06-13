@@ -475,7 +475,7 @@ var TimeSafe = {
 	}
 	
 	var row = tbody.insertRow(slotIdx==0?tbody.rows.length:TimeSafe.findFirstRow(project)+slotIdx);
-	if(!forceVisible && project.slot[slotIdx].length == 0 && !project.is_new) {
+	if(!forceVisible && project.slot[slotIdx].length == 0 && !project.is_resource) {
 	    row.className = "default_invisible";
 	    row.style.display='none';
 	}

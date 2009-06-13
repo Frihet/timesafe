@@ -2,6 +2,7 @@ drop table tr_tag_map;
 drop table tr_tag_group;
 drop table tr_tag;
 drop table tr_entry;
+drop table tr_project_user;
 drop table tr_user;
 drop table tr_project;
      
@@ -23,6 +24,13 @@ create table tr_user
 	deleted boolean not null default false
 );
 	
+create table tr_project_user
+(
+	id serial not null primary key,
+	project_id int not null references tr_project(id),
+	user_id int not null references tr_user(id)
+);
+
 
 create table tr_entry
 (
