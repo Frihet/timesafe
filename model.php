@@ -29,25 +29,51 @@ extends DbItem
      */
     function save()
     {
+	db::begin();
+	$ok = true;
+
+	if ($this->description == '') 
+	{
+	    $ok =false;
+	}
+	
+	
         if ($this->id != null) {
-            db::query('update tr_entry set description = :description, minutes=:minutes where id=:id',
-                      array(':description'=>$this->description,':minutes'=>$this->minutes, ':id'=>$this->id));
+            $ok &= db::query('update tr_entry set description = :description, minutes=:minutes where id=:id',
+			     array(':description'=>$this->description,':minutes'=>$this->minutes, ':id'=>$this->id));
         }
         else {
-            db::query('insert into tr_entry (description, minutes, project_id, user_id, perform_date) values (:description, :minutes, :project_id, :user_id, :perform_date)',
-                      array(':description'=>$this->description,':minutes'=>$this->minutes, ':project_id'=>$this->project_id, ':user_id'=>$this->user_id,
-                            ':perform_date'=>$this->perform_date));
+            $ok &= db::query('
+insert into tr_entry 
+(
+	description, minutes, project_id, user_id, perform_date
+) 
+values 
+(
+	:description, :minutes, :project_id, :user_id, :perform_date
+)',
+			     array(':description'=>$this->description,':minutes'=>$this->minutes, ':project_id'=>$this->project_id, ':user_id'=>$this->user_id,
+				   ':perform_date'=>$this->perform_date));
             $this->id = db::lastInsertId('tr_entry_id_seq');
         }
-        
-        db::query('delete from tr_tag_map where entry_id=:id',
-                  array(':id'=>$this->id));
+	
+        $ok &= db::query('delete from tr_tag_map where entry_id=:id',
+			 array(':id'=>$this->id));
         if ($this->_tags) {
             foreach($this->_tags as $tag_id) {
-                db::query('insert into tr_tag_map (entry_id, tag_id) values (:id, :tag_id)',
-                          array(':id'=>$this->id, ':tag_id'=>$tag_id));
+                $ok &= db::query('insert into tr_tag_map (entry_id, tag_id) values (:id, :tag_id)',
+				 array(':id'=>$this->id, ':tag_id'=>$tag_id));
             }
         }
+	if($ok) 
+	{
+	    db::commit();
+	}
+	else 
+	{
+	    db::rollback();
+	    error('Did not save entry ' . $this->id);
+	}
     }
 
     function delete()
