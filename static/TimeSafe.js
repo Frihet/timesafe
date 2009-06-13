@@ -217,8 +217,6 @@ var TimeSafe = {
 	TimeSafe.notifyClear(id);
 
 
-	TimeSafe.validateTags(id);
-
 	var time = $('#time_'+id)[0];
 	var day = id.split('_')[2];
 	var dayWork = TimeSafe.calcSum(day);
@@ -229,6 +227,7 @@ var TimeSafe = {
 	}
 	
 	if (time.value!='') {
+	    TimeSafe.validateTags(id);
 	    
 	    var time_val = time.value.parseTimeNazi();
 	    var description = $('#description_'+id)[0];
