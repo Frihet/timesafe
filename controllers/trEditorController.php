@@ -1,6 +1,6 @@
 <?php
 
-  /** The php backend. Mostly just creates a bunch of json data. All
+  /** The php backend for the main editing stuff. Mostly just creates a bunch of json data. All
    the exciting stuff is JavaScript. Which is scary.
    */
 class TREditorController
@@ -89,6 +89,9 @@ extends Controller
         return array_values($res);
     }
 
+    /**
+     Create the json data. and the user selection and forward/backward buttons.
+     */
     function viewRun()
     {
         $content = "";
@@ -190,7 +193,10 @@ extends Controller
         $this->show(null, $content);
 
     }
-
+    
+    /**
+     Create a list of all entries in the database. Currently unused.
+     */
     function entryListRun()
     {
 
@@ -244,7 +250,12 @@ extends Controller
     
     }
     
-
+    /** Save all updates. This is currently kind of slow because is
+     actually saves _all_ entries, not just the saved ones. A future
+     version should use a naming hierarchy that php can unserialize
+     automatically into a double-array, so that the saving code could
+     be simplified a bit.
+     */
     function saveRun()
     {
         /*

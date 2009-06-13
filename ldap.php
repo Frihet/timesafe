@@ -3,7 +3,8 @@
    users from out own office on every page view, which is likely to be
    a bit resource intensive, but not prohibitivly so, and it makes
    sure the user list is always completely correct.
-   
+
+   This will need to be improved in the future, e.g. 1.1 or 2.0.
    */
 require_once('FCToolkit.php');
 

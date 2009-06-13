@@ -1,7 +1,7 @@
 <?php
 
   /**
-   Project syncing with Egs. 
+   Project syncing with Egs. Kludgy, will be phased out soon.
   */
 class Egs
 {
