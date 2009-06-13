@@ -93,7 +93,24 @@ extends Controller
     {
         $content = "";
         $form = "";
-	$username = param('user',$_SERVER['PHP_AUTH_USER']);
+        if (param('entry')!==null) {
+	    /** It has been specified that we want to view a specific
+	     entry - we must figure out what user this entry belongs
+	     to, and set that to the current user.
+	     */
+	    /**
+	     TODO: Also chenge date interval
+	     */
+            $e = param('entry');
+	    $name = db::fetchItem('select u.name from tr_entry e join tr_user u on e.user_id=u.id where e.id=:id', array(':id'=>$e));
+	    if( $name) 
+	    {
+		$a = User::getAllUsers();
+		User::$user = $a[$name];
+	    }
+	    
+        }
+	$username = User::$user->name;
 	
         $next = self::nextBaseDateStr();
         $prev = self::prevBaseDateStr();
