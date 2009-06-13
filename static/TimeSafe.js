@@ -30,8 +30,8 @@ String.prototype.parseTimeNazi = function ()
     str = new String(this);
     str_arr = str.split(':');
     if (str_arr.length == 2) {
-	if (str_arr[0].match(/^[0-9]+$/) && str_arr[1].match(/^[0-9]+$/))
-	    return 60*parseInt(str_arr[0]) + parseInt(str_arr[1]);
+	if (str_arr[0].match(/^[0-9]*$/) && str_arr[1].match(/^[0-9]+$/))
+	    return 60*(str_arr[0].length>0?parseInt(str_arr[0]):0) + parseInt(str_arr[1]);
 	return NaN;
     }
     var str2 = str.replace(/,/g,'.');
