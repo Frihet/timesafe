@@ -178,7 +178,7 @@ class dbMaker
         if (!$res) {
             return null;
         }
-        $row = $res->fetch(PDO::FETCH_ASSOC);
+        $row = $res->fetch(PDO::FETCH_BOTH);
         self::$last_count = $res->rowCount();
         $res->closeCursor();
         return $row?$row[0]:null;
