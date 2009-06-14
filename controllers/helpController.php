@@ -90,6 +90,33 @@ Tags can be put into groups where at most one tag may be chosen. It can be made 
 ");
         
 
+        $this->add("Time report integration", "
+<p>
+TimeSafe integration with time report is currently rather kludgy. A future version of the time reporting tool will be significantly more powerful and extensible, but as of yet, time report integration relies on naming tags and tag groups according to specific patterns.
+
+<ul>
+<li>
+40 % overtime tags must match the perl regexp /^40 *% *overtime/i.
+</li>
+<li>
+100 % overtime tags must match the perl regexp /^100 *% *overtime/i.
+</li>
+<li>
+Work leave must match the perl regexp /^(work *leave|avspasering)$/i.
+</li>
+<li>
+Vacation must match the perl regexp /^vacation$/i.
+</li>
+<li>
+The group name for all types of illness must match the perl regexp /^(illness|sick.*)$/i.
+</li>
+<li>
+The group name for all types of paying non-work must match the perl regexp /^paying non[- ]?work$/i.
+</ul>
+Note that all these matches are case insensitive.
+</p>
+");
+        
         $this->add("Future features", "
 <p>
 There are loads of features in the TimeSafe pipeline. Before requesting a feature, please make sure that this issue is not reported by checking <a href='https://projects.freecode.no/projects/timesafe/issues'>the issue tracker</a>.

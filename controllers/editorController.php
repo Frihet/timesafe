@@ -3,7 +3,7 @@
   /** The php backend for the main editing stuff. Mostly just creates a bunch of json data. All
    the exciting stuff is JavaScript. Which is scary.
    */
-class TREditorController
+class EditorController
 extends Controller
 {
     
@@ -183,7 +183,7 @@ extends Controller
         $from=date('Y-m-d',Entry::getBaseDate()-3600*24*(Entry::getDateCount()-1));
         $to=date('Y-m-d',Entry::getBaseDate());
         
-        $content .= form::makeForm($form,array('action'=>'trEditor', 'task'=>'save','user'=>$username));
+        $content .= form::makeForm($form,array('controller'=>'editor', 'task'=>'save','user'=>$username));
 	$content .= "<div class='figure'><img src='../time_report/?type=histogram&from=$from&to=$to&users[]=$username' /><em class='caption'>Figure 1: Work performed. Warning! This is the number of hours currently stored on the server. This graph does not reflect any unsaved edits.</em></div>";
         
 

@@ -36,7 +36,7 @@ extends Application
         echo "<ul>\n";
  
         echo "<li>";
-	echo makeLink("?controller=trEditor", "Time registration", $is_tr?'selected':null);
+	echo makeLink("?controller=editor", "Time registration", $is_tr?'selected':null);
         echo "</li>\n";
 
         echo "<li>";
@@ -52,7 +52,7 @@ extends Application
 
     function getDefaultController()
     {
-        return "trEditor";
+        return "editor";
     }
     
     function getApplicationName()
