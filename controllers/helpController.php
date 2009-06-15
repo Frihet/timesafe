@@ -45,6 +45,9 @@ TimeSafe is a simple tool for reporting hours worked. It is layed out like a spr
 To perform time reporting, simply click the cell representing the project and day you wish to report for, and enter the number of hours worked and a description of the work performed. It may also be required to select one or more tags. To select multiple tags, hold the Ctrl key while selecting.
 </p>
 <p>
+The easiest way to navigate in timesafe is usually to use the keyboard. When a cell is selected, use the arrow keys to move around between the different cells, and use the tab key to move to the sidebar. Press the escape key to close the sidebar.
+</p>
+<p>
 If you need to report hours to the same project int the same day more than once, e.g. with a different set of tags, you can create an extra line by clicking the «+» right next to the project name. This will create a new, empty row in the form.
 </p>
 ");
@@ -96,24 +99,24 @@ TimeSafe integration with time report is currently rather kludgy. A future versi
 
 <ul>
 <li>
-40 % overtime tags must match the perl regexp /^40 *% *overtime/i.
+40 % overtime tags must match the perl regexp /^40 *% *overtime/i. For example «40 % overtime» would match.
 </li>
 <li>
-100 % overtime tags must match the perl regexp /^100 *% *overtime/i.
+100 % overtime tags must match the perl regexp /^100 *% *overtime/i. For example «100 % overtime» would match.
 </li>
 <li>
-Work leave must match the perl regexp /^(work *leave|avspasering)$/i.
+Work leave tags must match the perl regexp /^(work *leave|avspasering)$/i. For example «Work leave» would match.
 </li>
 <li>
-Vacation must match the perl regexp /^vacation$/i.
+Vacation tags must match the perl regexp /^vacation$/i. For example «Vacation» would match.
 </li>
 <li>
-The group name for all types of illness must match the perl regexp /^(illness|sick.*)$/i.
+The <i>group name</i> for all types of illness must match the perl regexp /^(illness|sick.*)$/i. For example «Illness» would match.
 </li>
 <li>
-The group name for all types of paying non-work must match the perl regexp /^paying non[- ]?work$/i.
+The <i>group name</i> for all types of paying non-work must match the perl regexp /^paying non[- ]?work$/i. For example «Paying non-work» would match.
 </ul>
-Note that all these matches are case insensitive.
+Note that some of these tags match agains tag group name, and others against tag name. All the matches are case insensitive.
 </p>
 ");
         
