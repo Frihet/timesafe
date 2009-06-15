@@ -134,7 +134,7 @@ where u.name = :u";
 
 }
 
-$egs = new Egs(EGS_DSN);
+$egs = new Egs(FC_DSN_EGS);
 $egs->main();
 
 ?>

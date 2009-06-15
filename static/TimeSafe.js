@@ -573,7 +573,7 @@ var TimeSafe = {
     
     /**
        Toggle visiblity of unused projects
-     */
+    */
     updateVisibility: function()
     {
 	if($('#show_all')[0].checked) {
