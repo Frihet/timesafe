@@ -1,0 +1,9 @@
+# Static content should be cached
+<IfModule mod_expires.c>
+ExpiresActive On
+ExpiresDefault "access plus 2 months"
+</IfModule>
+<IfModule mod_deflate.c>
+SetOutputFilter DEFLATE 
+AddOutputFilterByType DEFLATE text/*
+</IfModule>
