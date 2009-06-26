@@ -96,6 +96,7 @@ extends Controller
     {
         $content = "";
         $form = "";
+        
         if (param('entry')!==null) {
 	    /** It has been specified that we want to view a specific
 	     entry - we must figure out what user this entry belongs
@@ -114,6 +115,7 @@ extends Controller
 	    
         }
 	$username = User::$user->name;
+        util::setTitle("Editing hours for " . User::$user->fullname);
 	
         $next = self::nextBaseDateStr();
         $prev = self::prevBaseDateStr();

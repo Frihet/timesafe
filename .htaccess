@@ -1,0 +1,7 @@
+RewriteEngine on
+RewriteOptions inherit
+RewriteRule ^([a-zA-Z_][a-zA-Z0-9_]*)/([0-9]+)/([a-zA-Z0-9_]+)$ ?controller=$1&id=$2&task=$3
+RewriteRule ^([a-zA-Z_][a-zA-Z0-9_]*)/([0-9]+)$ ?controller=$1&id=$2
+RewriteRule ^([a-zA-Z_][a-zA-Z0-9_]*)$ ?controller=$1
+#RewriteRule ci tjoho
+#RewriteRule ci/13 tjoho
