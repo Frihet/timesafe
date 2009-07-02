@@ -183,7 +183,7 @@ extends Controller
         $form .= "\n};\nTimeSafe.addProjectLines();\n</script>\n\n";
 
         $from=date('Y-m-d',Entry::getBaseDate()-3600*24*(Entry::getDateCount()-1));
-        $to=date('Y-m-d',Entry::getBaseDate());
+        $to=date('Y-m-d',Entry::getBaseDate()+3600*24);
         
         $content .= form::makeForm($form,array('controller'=>'editor', 'task'=>'save','user'=>$username));
 	$content .= "<div class='figure'><img src='../time_report/?type=histogram&from=$from&to=$to&users[]=$username' /><em class='caption'>Figure 1: Work performed. Warning! This is the number of hours currently stored on the server. This graph does not reflect any unsaved edits.</em></div>";
@@ -322,8 +322,7 @@ extends Controller
         message("Hours have been saved");
         util::redirect(makeUrl(User::$me!=User::$user?array('user'=>param('user')):array('user'=>null)));        
     }
-    
-    
+      
 }
 
 
