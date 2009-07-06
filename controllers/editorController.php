@@ -106,7 +106,12 @@ extends Controller
 	     TODO: Also chenge date interval
 	     */
             $e = param('entry');
-	    $row = db::fetchRow('select u.name name, e.perform_date perform_date from tr_entry e join tr_user u on e.user_id=u.id where e.id=:id', array(':id'=>$e));
+	    $row = db::fetchRow('
+select u.name as name, e.perform_date as perform_date 
+from tr_entry e 
+join tr_user u 
+on e.user_id=u.id 
+where e.id=:id', array(':id'=>$e));
 	    $name = $row['name'];
             
 	    if($name) 
@@ -115,8 +120,7 @@ extends Controller
 		User::$user = $a[$name];
 	    }
             $date = $row['perform_date'];
-            
-	    
+            $_REQUEST['date'] = $date;
         }
 	$username = User::$user->name;
         util::setTitle("Editing hours for " . User::$user->fullname);
