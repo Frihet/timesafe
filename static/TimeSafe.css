@@ -150,3 +150,10 @@ input[disabled]
 {
     display:none;
 }
+
+tbody#time_body tr:hover,
+tbody#time_body input:hover
+{
+    background: #bfbfff;
+}
+

@@ -218,9 +218,12 @@ var TimeSafe = {
 
 
 	var time = $('#time_'+id)[0];
+	var project_idx = id.split('_')[0];
+	var slot = id.split('_')[1];
 	var day = id.split('_')[2];
 	var dayWork = TimeSafe.calcSum(day);
-	
+	var empty = false;
+
 	if (dayWork > 60*24) {
 	    TimeSafe.notify(id, 'Impossible to work more than 24 hours in a single day');
 	    TimeSafe.error[id] = 1;
@@ -231,7 +234,6 @@ var TimeSafe = {
 	    
 	    var time_val = time.value.parseTimeNazi();
 	    var description = $('#description_'+id)[0];
-	    var project_idx = id.split('_')[0];
 	    var project_id = $('#project_id_'+project_idx)[0];
 	    var isExternal=TimeSafeData.projects[project_idx].external;
 	    if (isNaN(time_val)) {
@@ -256,13 +258,26 @@ var TimeSafe = {
 		    TimeSafe.notify(id, 'No description of work given');
 		}
 	    }
+	} else {
+	    empty = true;
 	}
-	
-	$('#td_'+id)[0].className=(TimeSafe.error[id]==1)?"error":((TimeSafe.warning[id]==1)?"warning":"modified");
+
 	var errCount = 0;
 	$.each(TimeSafe.error,function(idx,el){errCount += el;});
 	var warnCount = 0;
 	$.each(TimeSafe.warning,function(idx,el){warnCount += el;});
+
+	if(empty) {
+	    wasEntry = false;
+	    project = TimeSafeData.projects[project_idx];
+	    if(project.slot[slot] && project.slot[slot][day] && project.slot[slot][day].id != null) {
+		wasEntry = true;
+	    }
+	    $('#td_'+id)[0].className=wasEntry?"modified":"";
+	} else {
+	    $('#td_'+id)[0].className=(TimeSafe.error[id]==1)?"error":((TimeSafe.warning[id]==1)?"warning":"modified");
+	}
+
 	$('#save')[0].disabled = errCount > 0;
 	$('#notification_global')[0].innerHTML = (errCount>0)?'There are errors in your hour registration. Correct them before proceeding':((warnCount>0)?'There are warnings in your hour registration. Make sure that they are ok before proceeding.':'');
     },
