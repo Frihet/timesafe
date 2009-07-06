@@ -475,6 +475,8 @@ extends DbItem
 	$this->id = $id;
 	$this->name = $name;
 	$this->fullname = $fullname;
+        
+        User::$_all[$this->name] = $this;
     }
     
     function getAllUsers()
@@ -485,11 +487,9 @@ extends DbItem
 	    return self::$_all;
 	}
 	self::$_all = array();
-	
-	foreach(db::query('select * from tr_user order by fullname') as $row) 
+	foreach(db::query('select * from tr_user where deleted=false order by fullname') as $row) 
 	{
-	    self::$_all[$row['name']] = new User($row['id'], $row['name'], $row['fullname']);
-	    
+	    new User($row['id'], $row['name'], $row['fullname']);
 	}
 	return self::$_all;
     }
@@ -505,7 +505,6 @@ extends DbItem
 			    ':n'=>$this->name));
 	    
 	} else {
-	    
 	    db::query('insert into tr_user (name, fullname) values(:n, :f)',
 		      array(':f'=>$this->fullname,
 			    ':n'=>$this->name));
@@ -514,6 +513,16 @@ extends DbItem
 	}
     }
     
+    function delete()
+    {
+        db::query('update tr_user set deleted=true where id=:id',
+                  array(':id'=>$this->id));	    
+	if( self::$_all)
+	{
+            unset(self::$_all[$this->name]);
+        }
+        
+    }
     
 }
 

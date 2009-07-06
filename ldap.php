@@ -26,12 +26,12 @@ class TsLdap
     function updateUsers() {
 	
 	$fc = new FCToolkit();
-	User::getAllUsers();
+	$all = User::getAllUsers();
 	
 	$u = db::fetchList('select id, name, fullname from tr_user');
 	$my_name = $_SERVER['PHP_AUTH_USER'];
-	User::$me = User::$_all[$my_name];
-	User::$user = User::$_all[param('user',$my_name)];
+	User::$me = $all[$my_name];
+	User::$user = $all[param('user',$my_name)];
 	
 	//echo $my_name;
 	
@@ -55,44 +55,42 @@ class TsLdap
 		$info = ldap_get_entries($ldapconn, $entry);
 		//message(sprint_r(User::$_all));
 		//return;
-		
+		$is_in_ldap = array();
+                
 		foreach($info as $entry) {
 		    $full = $entry['cn']['0'];
 		    $name = $entry['uid']['0'];
 		    $pass = $entry['userpassword']['0'];
-		    if($pass === null) 
+		    /* Ignore disabled users. There is no disabled
+                     flag, they simply don't have a password.
+                     */
+                    if($pass === null) 
 		    {
 			continue;
 		    }
-		    if( array_key_exists($name, User::$_all)) 
+                    $is_in_ldap[$name] = true;
+                    
+		    if( array_key_exists($name, $all)) 
 		    {
-			$u = User::$_all[$name];
-			if($u->fullname != $full) 
-			{
+			$u = $all[$name];
+			if($u->fullname != $full) {
 			    $u->fullname = $full;
 			    $u->save();
 			}
-			
-		    }
+                    }
 		    else 
 		    {
-			//echo "Save new $name";
-			
 			$u = new User(null, $name, $full);
-			User::$_all[] = $u;
 			$u->save();
-		    }
+                    }
 		    
-		}		
-	
-		if ($info) {
-		    if (in_array(LDAP_USER_ATTR_NAME, $info[0])) {
-			$userinfo['name'] = $info[0][LDAP_USER_ATTR_NAME][0];
-		    }
-		    if (in_array(LDAP_USER_ATTR_MAIL, $info[0])) {
-			$userinfo['email'] = $info[0][LDAP_USER_ATTR_MAIL][0];
-		    }
 		}
+                foreach($all as $u) {
+                    if(!array_key_exists($u->name, $is_in_ldap)){
+                        //message( "User deleted: " . sprint_r($u));
+                        $u->delete();
+                    }
+                }
 	    } else {
 		die("Failed to find users in LDAP.");
 	    }
