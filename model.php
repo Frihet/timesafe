@@ -182,6 +182,13 @@ extends dbItem
     var $is_resource;
     
     static $_items;
+
+    function __construct($arr) 
+    {
+        $this->initFromArray($arr);
+        Project::$_items[$this->id] = $this;
+    }
+    
         
     function getProjects() 
     {
@@ -215,10 +222,7 @@ where p.open=true
 order by p.name",
 			      array(':user_id'=>User::$user->id)) as $row) {
 	    //message($row['tralala']);
-	    
-            $p = new Project();
-            $p->initFromArray($row);
-            Project::$_items[$p->id] = $p;
+            $p = new Project($row);
         }        
     }
     
@@ -260,7 +264,16 @@ order by p.name",
                         ':id'=>$id,
                         ':ext'=>$external));        
     }    
-  
+
+    function delete()
+    {
+        db::query('update tr_project set open=false where id=:id',
+                  array(':id'=>$this->id));
+        if (Project::$_items) {
+            unset(Project::$_items[$this->id]);
+        }
+    }
+      
 }
 
 class Tag

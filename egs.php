@@ -30,7 +30,7 @@ class Egs
         $query = "
 select p.id, p.name, p.startdate as start_date, owner
 from project p
-where p.archived='f'
+where p.archived=false and p.completed=false
     and p.owner like :user_wildcard
 order by name
 ";
@@ -57,7 +57,7 @@ join resource r
 on r.projectid=p.id
 join useroverview u
 on u.id=r.personid
-where p.archived = 'f'
+where p.archived = false and p.completed=false
     and u.username = :u
 order by name
 ";
@@ -109,9 +109,11 @@ where u.name = :u";
     {
         $egs = $this->getProjects();
         $map = Project::getEgsMapping();
-        
+        $exists = array();
+      
         foreach($egs as $egs_id => $egs) {
             $external = preg_match('/^Div[1-7][a-gA-G]? *[:-]/',$egs['name'])?'f':'t';
+            $exists[$egs_id] = true;
 
             if( array_key_exists($egs_id, $map) ) {
                 if(param('reload_projects')==1) {
@@ -128,6 +130,13 @@ where u.name = :u";
                          $egs['start_date'],
                          $external);
         }
+
+        foreach(Project::getProjects() as $p) {
+            if(!array_key_exists($p->egs_id, $exists)) {
+                //message("Entry " . $p->name . " should be deleted");
+                $p->delete();
+            }
+        }        
 	
 	$this->updateUser(User::$user->name);
     }
