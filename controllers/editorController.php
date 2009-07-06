@@ -124,9 +124,12 @@ extends Controller
         $next = self::nextBaseDateStr();
         $prev = self::prevBaseDateStr();
 	$user = form::makeSelect('user', form::makeSelectList(User::getAllUsers(),'name', 'fullname'),$username, null, array('onchange'=>'submit();'));
-	$user_form = form::makeForm($user, array(), 'get');
+        
+	$user_form = form::makeForm($user, param('date')?array('date'=>param('date')):array(), 'get');
 
-        $content .= "<p><a href='?date=$prev'>«earlier</a> <a href='?date=$next'>later»</a></p>";
+        $prev_link = makeUrl(array('date'=>$prev));
+        $next_link = makeUrl(array('date'=>$next));
+        $content .= "<p><a href='$prev_link'>«earlier</a> <a href='$next_link'>later»</a></p>";
         $content .= $user_form;
 	
         $content .= "<p><input type='checkbox' id='show_all' onchange='TimeSafe.updateVisibility();'/><label for='show_all'>Show all projects</label></p>";
