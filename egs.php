@@ -110,10 +110,17 @@ where u.name = :u";
         $egs = $this->getProjects();
         $map = Project::getEgsMapping();
         $exists = array();
-      
+
+        /*
+         Update and create projects
+         */
         foreach($egs as $egs_id => $egs) {
-            $external = preg_match('/^Div[1-7][a-gA-G]? *[:-]/',$egs['name'])?'f':'t';
+            $external = !preg_match('/^Div[1-7][a-gA-G]? *[:-]/',$egs['name']);
             $exists[$egs_id] = true;
+            $technical = !preg_match('/^Div[1-7][a-gA-G]? *-/',$egs['name']);
+            $class = array($external?2:1, $technical?3:4);
+            
+            //message("Project ".$egs['name']." is " . ($external?'external':'internal')
 
             if( array_key_exists($egs_id, $map) ) {
                 if(param('reload_projects')==1) {
@@ -121,16 +128,19 @@ where u.name = :u";
                                     $egs['name'],
                                     $egs_id, 
                                     $egs['start_date'],
-                                    $external);
+                                    $class);
                 }
                 continue;
             }
             Project::add($egs['name'], 
                          $egs_id, 
                          $egs['start_date'],
-                         $external);
+                         $class);
         }
 
+        /*
+         Mark projects not found in egs as closed
+         */
         foreach(Project::getProjects() as $p) {
             if(!array_key_exists($p->egs_id, $exists)) {
                 //message("Entry " . $p->name . " should be deleted");

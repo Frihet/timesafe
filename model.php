@@ -3,14 +3,12 @@
    All database access ges through this file.
 
    */
-
+  /*
 define('TR_VISIBILITY_PROJECT',0);
 define('TR_VISIBILITY_INTERNAL',1);
 define('TR_VISIBILITY_EXTERNAL',2);
 define('TR_VISIBILITY_ALL',3);
-
-
-
+  */
 class Entry
 extends DbItem
 {
@@ -177,9 +175,10 @@ extends dbItem
     var $id;
     var $egs_id;
     var $start_date;
-    var $external;
     var $name;
     var $is_resource;
+
+    var $_project_class=null;
     
     static $_items;
 
@@ -206,6 +205,28 @@ extends dbItem
         }
         return $res;
     }
+
+    function getProjectClassNames()
+    {
+        $res = array();
+        foreach(db::query("select id, name from tr_project_class") as $row){
+            $res[$row['id']] = $row['name'];
+        }
+        return $res;
+        
+    }
+        
+    function getProjectClass()
+    {
+        if($this->_project_class !== null){
+            return $this->_project_class;
+        }
+        $this->_project_class=array();
+
+        foreach(db::fetchList("select project_class_id from tr_project_project_class where project_id=:id", array(":id"=>$this->id)) as $row) {
+            $this->_project_class[]= $row['project_class_id'];
+        }
+    }
     
     function _load()
     {
@@ -215,7 +236,6 @@ extends dbItem
         foreach(db::fetchList("
 select p.id, p.name, p.egs_id, 
     extract(epoch from p.start_date) as start_date, 
-    case when p.external='t' then 1 else 0 end as external,
     (select id from tr_project_user pu where pu.user_id=:user_id and pu.project_id = p.id) is not null as is_resource
 from tr_project p
 where p.open=true 
@@ -224,6 +244,11 @@ order by p.name",
 	    //message($row['tralala']);
             $p = new Project($row);
         }        
+
+        foreach(db::fetchList("select project_id, project_class_id from tr_project_project_class") as $row) {
+            if(array_key_exists($row['project_id'],Project::$_items))
+                Project::$_items[$row['project_id']]->_project_class[]= $row['project_class_id'];
+        }
     }
     
     function getEgsMapping()
@@ -247,23 +272,44 @@ order by p.name",
         return Project::$_items[$id];
     }
     
-    function add($name, $egs_id, $start_date, $external) 
+    function add($name, $egs_id, $start_date, $project_class) 
     {
-        db::query('insert into tr_project (name, egs_id, start_date, external) values (:name, :value, :d, :ext)',
+        db::query('insert into tr_project (name, egs_id, start_date) values (:name, :value, :d)',
                   array(':name'=>$name, ':value'=>$egs_id,
-                        ':d'=>$start_date,
-                        ':ext'=>$external));
+                        ':d'=>$start_date));
+        $id = db::lastInsertId('tr_project_id_seq');
+        
+        foreach($project_class as $cl) {
+            db::query('insert into tr_project_project_class (project_id, project_class_id) values (:pid, :cid)',
+                      array(':pid'=>$id, 
+                            ':cid'=>$cl));
+        }
+        
+
     }
   
-    function update($id, $name, $egs_id, $start_date, $external) 
+    function update($id, $name, $egs_id, $start_date, $project_class) 
     {
-        db::query('update tr_project set name=:name, egs_id=:value, start_date=:d, external=:ext where id=:id',
+        db::begin();
+        
+        $ok  = db::query('update tr_project set name=:name, egs_id=:value, start_date=:d where id=:id',
                   array(':name'=>$name, 
                         ':value'=>$egs_id,
                         ':d'=>$start_date,
-                        ':id'=>$id,
-                        ':ext'=>$external));        
-    }    
+                        ':id'=>$id));        
+        $ok &= db::query('delete from tr_project_project_class where project_id=:id', array(':id'=>$id));
+        foreach($project_class as $cl) {
+            $ok &= db::query('insert into tr_project_project_class (project_id, project_class_id) values (:pid, :cid)',
+                      array(':pid'=>$id, 
+                            ':cid'=>$cl));
+        }
+        if($ok) {
+            db::commit();
+        }
+        else {
+            db::rollback();
+        }
+    }
 
     function delete()
     {
@@ -282,43 +328,26 @@ extends DbItem
 
     var $id;
     var $name;
-    var $visibility;
+    var $project_class_id;
     var $project_id;
     var $group_id;
     var $recommended;
     
     static $_tag_cache;
 
-    function update() 
+    function __construct($param=null) 
     {
-                $query = "
-update tr_tag
-set name=:name, project_id = :project_id, visibility=:visibility, group_id=:group_id, recommended=:r
-where id= :id
-";
-                db::query($query, array(':name'=>$this->name,
-                                        ':id'=>$this->id,
-                                        ':project_id'=>$this->project_id, 
-                                        ':visibility'=>$this->visibility,
-                                        ':group_id'=>$this->group_id, 
-                                        ':r'=>$this->recommended?'t':'f'));
+        $this->table = 'tr_tag';
+        if($param) {
+            if ((int)$param == $param) {
+                $this->load($param);
+            }
+            else if (is_array($param)) {
+                $this->initFromArray($param);
+            }
+        }
     }
-    
-    function create()
-    {
-        db::query("
-insert into tr_tag
-(name, project_id, visibility, group_id, recommended)
-values
-(:name, :project_id, :visibility, :group_id, :r)", 
-                  array(':name'=>$this->name, 
-                        ':project_id'=>$this->project_id,
-                        ':visibility'=>$this->visibility,
-                        ':group_id'=>$this->group_id,
-                        ':r'=>$this->recommended?'t':'f')
-                  );
-    }
-    
+
     function delete($id) 
     {
         db::query("update tr_tag set deleted = true where id=:id", 
@@ -330,16 +359,23 @@ values
         $tag_list = self::fetch();
         
         $out = array();
-        $project_external = Project::getProject($project_id)->external;
+        //$project_external = Project::getProject($project_id)->external;
         
         foreach($tag_list as $tag) {
             $vis = $tag->visibility;
-
-            $show = ($project_external && ($vis == TR_VISIBILITY_EXTERNAL)) ||
-            (!$project_external && ($vis == TR_VISIBILITY_INTERNAL)) ||
-            ($vis == TR_VISIBILITY_ALL) ||
-            ($vis == TR_VISIBILITY_PROJECT && $tag->project_id == $project_id);
             
+            $show = false;
+            
+            if($tag->project_class_id === null) {
+                if($tag->project_id !== null) {
+                    $show = $tag->project_id == $project_id;
+                } else {
+                    $show = true;
+                }
+            } else {
+                $show = (in_array($tag->project_class_id, Project::getProject($project_id)->getProjectClass()));
+            }
+                        
             if ($show) {
                 $out[] = $tag;//array($tag->id, $tag->name);
             }
@@ -383,7 +419,12 @@ order by name");
         return $out;
         
     }
-    
+
+    function save()
+    {
+        return $this->saveInternal();
+    }
+     
     
 }
 
@@ -397,25 +438,19 @@ extends DbItem
     
     static $_tag_group_cache;
 
-    function update() 
+    function __construct($param=null) 
     {
-        $query = "
-update tr_tag_group
-set name=:name, required = :required
-where id= :id
-";
-        db::query($query, array(':name'=>$this->name,':id'=>$this->id,':required'=>$this->required?'t':'f'));
+        $this->table = 'tr_tag_group';
+        if($param) {
+            if ((int)$param == $param) {
+                $this->load($param);
+            }
+            else if (is_array($param)) {
+                $this->initFromArray($param);
+            }
+        }
     }
-    
-    function create()
-    {
-        db::query("
-insert into tr_tag_group
-(name, required)
-values
-(:name, :required)", array(':name'=>$this->name, ':required'=>$this->required?'t':'f'));
-    }
-    
+
     function delete($id) 
     {
         db::query("update tr_tag set group_id=null where group_id=:id", 
@@ -468,6 +503,11 @@ order by name");
         
     }
     
+    function save()
+    {
+        return $this->saveInternal();
+    }
+     
     
 }
 

@@ -21,6 +21,7 @@ extends Controller
             $foo->month = (int)date('m', $tm);
             $foo->year = (int)date('Y', $tm);
             $foo->day = (int)date('d', $tm);
+            $foo->timestamp = $tm;
             $wd = (int)date('w', $tm);
             $foo->workday = ($wd>0) && ($wd <6);
             $res[] = $foo;
@@ -39,6 +40,11 @@ extends Controller
     {
         $tm = Entry::getBaseDate();
         return date('Y-m-d', $tm - 7* 3600*24);
+    }
+
+    function nowBaseDateStr()
+    {
+        return date('Y-m-d');
     }
 
     function populateTimeSlots()
@@ -127,13 +133,15 @@ where e.id=:id', array(':id'=>$e));
 	
         $next = self::nextBaseDateStr();
         $prev = self::prevBaseDateStr();
+        $now = self::nowBaseDateStr();
 	$user = form::makeSelect('user', form::makeSelectList(User::getAllUsers(),'name', 'fullname'),$username, null, array('onchange'=>'submit();'));
         
 	$user_form = form::makeForm($user, param('date')?array('date'=>param('date')):array(), 'get');
 
         $prev_link = makeUrl(array('date'=>$prev));
         $next_link = makeUrl(array('date'=>$next));
-        $content .= "<p><a href='$prev_link'>«earlier</a> <a href='$next_link'>later»</a></p>";
+        $now_link = makeUrl(array('date'=>$now));
+        $content .= "<p><a href='$prev_link'>«earlier</a> <a href='$now_link'>today</a>  <a href='$next_link'>later»</a></p>";
         $content .= $user_form;
 	
         $content .= "<p><input type='checkbox' id='show_all' onchange='TimeSafe.updateVisibility();'/><label for='show_all'>Show all projects</label></p>";
@@ -148,7 +156,9 @@ where e.id=:id', array(':id'=>$e));
         foreach($dates as $date) {
             $class = $date->workday ? "weekday" : "weekend";
             
-            $form .= "<th class='$class'>{$date->day}/{$date->month}</th>";
+            $form .= "<th class='$class'>".date("D,<\\b\\r>M<\\b\\r>d",$date->timestamp)."</th>";
+            //$form .= "<th class='$class'>".date("d/m",$date->timestamp)."</th>";
+
             $date = $date->year."-".$date->month."-".$date->day;
             $form .= "<input type='hidden' name='date_$date_idx' value='$date'/>";
             
@@ -197,7 +207,7 @@ where e.id=:id', array(':id'=>$e));
         $to=date('Y-m-d',Entry::getBaseDate()+3600*24);
         
         $content .= form::makeForm($form,array('controller'=>'editor', 'task'=>'save','user'=>$username));
-	$content .= "<div class='figure'><img src='../time_report/?type=histogram&from=$from&to=$to&users[]=$username' /><em class='caption'>Figure 1: Work performed. Warning! This is the number of hours currently stored on the server. This graph does not reflect any unsaved edits.</em></div>";
+	$content .= "<div class='figure'><img src='../time_report/?type=histogram&from=$from&to=$to&users[]=$username' /><em class='caption'>Figure 1: Work performed. Warning! This is the number of hours stored on the server when this page was generated. The graph does not reflect any unsaved edits.</em></div>";
         
 
 	//$content .= $this->entryListRun();

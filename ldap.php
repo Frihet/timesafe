@@ -1,6 +1,6 @@
 <?php
   /** Kludge in ldap users into TimeSafe. Do this by fetching all
-   users from out own office on every page view, which is likely to be
+   users from our own office on every page view, which is likely to be
    a bit resource intensive, but not prohibitivly so, and it makes
    sure the user list is always completely correct.
 
@@ -39,7 +39,7 @@ class TsLdap
 	// search the LDAP database for information.
 /*	$uid = $this->getAuthUser();
 	$userinfo = array('username' => $uid);
-*/	
+*/
 	$ldapconn = $fc->getLDAPConnectionBound();
 	if ($ldapconn) {
 	    $base = LDAP_USER_BASE;
@@ -64,22 +64,18 @@ class TsLdap
 		    /* Ignore disabled users. There is no disabled
                      flag, they simply don't have a password.
                      */
-                    if($pass === null) 
-		    {
+                    if($pass === null) {
 			continue;
 		    }
                     $is_in_ldap[$name] = true;
                     
-		    if( array_key_exists($name, $all)) 
-		    {
+		    if( array_key_exists($name, $all)) {
 			$u = $all[$name];
 			if($u->fullname != $full) {
 			    $u->fullname = $full;
 			    $u->save();
 			}
-                    }
-		    else 
-		    {
+                    } else {
 			$u = new User(null, $name, $full);
 			$u->save();
                     }
@@ -100,13 +96,11 @@ class TsLdap
 	    die("Failed to obtain LDAP connection");
 	}
 	
-	
 	return $userinfo;
     }
 
 }
 
 TsLdap::updateUsers();
-
 
 ?>
