@@ -517,6 +517,7 @@ var TimeSafe = {
 	if(slotIdx ==0) {
 	    var link = document.createElement('a');
 	    link.innerHTML = '+';
+	    link.className="add_line"
 	    link.onclick = function(event) {
 		TimeSafe.addProjectSlot(tbody, project);
 	    };

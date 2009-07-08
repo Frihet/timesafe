@@ -157,3 +157,7 @@ tbody#time_body input:hover
     background: #bfbfff;
 }
 
+.add_line
+{
+    cursor: pointer;
+}
