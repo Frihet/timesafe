@@ -55,7 +55,7 @@ extends Controller
             $project->project_id = $project_id;
             $project->project_name = $orig->name;
             $project->slot = array();
-            $project->external = $orig->external;
+            $project->external = in_array(2, $orig->getProjectClass());
             $project->is_resource = $orig->is_resource;
             
             $res[$project_id] = $project;
@@ -101,6 +101,7 @@ extends Controller
     function viewRun()
     {
         $content = "";
+        $content .= "<div id='debug' style='position:absolute;right: 100px;'></div>";
         $form = "";
         
         if (param('entry')!==null) {
@@ -156,8 +157,8 @@ where e.id=:id', array(':id'=>$e));
         foreach($dates as $date) {
             $class = $date->workday ? "weekday" : "weekend";
             
-            $form .= "<th class='$class'>".date("D,<\\b\\r>M<\\b\\r>d",$date->timestamp)."</th>";
-            //$form .= "<th class='$class'>".date("d/m",$date->timestamp)."</th>";
+            $form .= "<th class='$class'>".date("D<\\b\\r>M<\\b\\r>j",$date->timestamp)."</th>";
+            //$form .= "<th class='$class'>".date("n/m",$date->timestamp)."</th>";
 
             $date = $date->year."-".$date->month."-".$date->day;
             $form .= "<input type='hidden' name='date_$date_idx' value='$date'/>";
@@ -209,6 +210,8 @@ where e.id=:id', array(':id'=>$e));
         $content .= form::makeForm($form,array('controller'=>'editor', 'task'=>'save','user'=>$username));
 	$content .= "<div class='figure'><img src='../time_report/?type=histogram&from=$from&to=$to&users[]=$username' /><em class='caption'>Figure 1: Work performed. Warning! This is the number of hours stored on the server when this page was generated. The graph does not reflect any unsaved edits.</em></div>";
         
+        
+
 
 	//$content .= $this->entryListRun();
         //$content .= "<button type='button' onclick='TimeSafe.addProjectLines();'>Add</button>";
