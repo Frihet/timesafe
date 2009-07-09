@@ -15,19 +15,46 @@ window.onload = function(evt) {
 
     $('body')[0].onmousedown = function(e){
 	TimeSafe.dragStart = null;
-	if(e.target.className== "time") {
+	if(e.target.className== "time" && (e.shiftKey || e.ctrlKey) && e.target.value != "") {
+	    var copying = e.ctrlKey;
+	    TimeSafe.dragIsCopy = copying;
 	    TimeSafe.dragStart = e.target;
 	    TimeSafe.sidebarHide();
-	}
-    }
+	    $('body').addClass(copying?'copying':'dragging');
 
+	    $('body')[0].onmousemove = function(e) {
+		old = TimeSafe.dragOver;
+		
+		TimeSafe.dragOver = TimeSafe.getElementAtPosition($('input.time'), e.getCoordinate());
+		
+		if(old != TimeSafe.dragOver){
+		    if(old)
+			$(old).removeClass("dnd_drop");
+		    $(TimeSafe.dragOver).addClass("dnd_drop");
+		}
+	    }
+	}
+	
+    }
+    
     $('body')[0].onmouseup = function(e){
+	$('body').removeClass('dragging copying');
+	$('body')[0].onmousemove = null;
 	dragStart = TimeSafe.dragStart;
+	TimeSafe.dragOver = TimeSafe.getElementAtPosition($('input.time'), e.getCoordinate());
+	
+	if(TimeSafe.dragOver){
+	    $(TimeSafe.dragOver).removeClass("dnd_drop");
+	}
+
 	if(dragStart) {
 	    var dragStop = TimeSafe.getElementAtPosition($('input.time'), e.getCoordinate());
 	    if(dragStop && dragStop.className=="time" ) {
 		if(dragStop != TimeSafe.dragStart) {
-		    TimeSafe.moveCellContent(TimeSafe.dragStart,dragStop);
+		    TimeSafe.copyCellContent(TimeSafe.dragStart,dragStop);
+		    if(!TimeSafe.dragIsCopy)
+			TimeSafe.stripCellContent(TimeSafe.dragStart);
+
 		} else {
 		    sidebarId = 'sidebar_' + dragStart.idStr;
 		    TimeSafe.sidebarShow(sidebarId);
@@ -140,7 +167,7 @@ var TimeSafe = {
 	return null;
     },
 
-    moveCellContent: function(from, to) {
+    copyCellContent: function(from, to) {
 	//debug("move stuff from " +from.id + " to " + to.id);
 	var toSidebar = $("#sidebar_" + to.idStr)[0];
 	var fromSidebar = $("#sidebar_" + from.idStr)[0];
@@ -156,13 +183,11 @@ var TimeSafe = {
 	*/
 
 	to.value=from.value;
-	from.value="";
 
 	/*
 	  Move description
 	 */
 	toSidebar.description.value = fromSidebar.description.value;
-	fromSidebar.description.value = "";
 
 	/*
 	  Try to move over the tags
@@ -181,13 +206,25 @@ var TimeSafe = {
 		    }
 		}
 	    }	    
-	    fromTag[i].selected=false;
 	}
 
 	/*
 	  Validate
 	 */
 	TimeSafe.validate(to.idStr)
+    },
+    
+    stripCellContent: function(from) {
+	var fromSidebar = $("#sidebar_" + from.idStr)[0];
+	fromSidebar.doInit();
+	from.value="";
+	fromSidebar.description.value = "";
+	for(var i=0; i<fromTag.length; i++) {
+	    fromTag[i].selected=false;
+	}
+	/*
+	  Validate
+	 */
 	TimeSafe.validate(from.idStr)
     },
     
@@ -223,7 +260,7 @@ var TimeSafe = {
        Handle arrow keys and excepe key if pressed in one of the cells by moving around.
        Moving up and down is way harder than it should be. Maybe we could use table row stuff to find previous index?
      */
-    slotHandleArrowKeys: function(evt) {
+    slotKeypressEventHandler: function(evt) {
 	evt = (evt) ? evt : ((window.event) ? event : null);
 	if (evt) {
 	    input_id = evt.target.id;
@@ -352,7 +389,6 @@ var TimeSafe = {
 	TimeSafe.error[id] = 0;
 	TimeSafe.notifyClear(id);
 
-
 	var time = $('#time_'+id)[0];
 	var project_idx = id.split('_')[0];
 	var slot = id.split('_')[1];
@@ -398,22 +434,39 @@ var TimeSafe = {
 	    empty = true;
 	}
 
+	/*
+	  Count number of errors and warnings
+	 */
 	var errCount = 0;
 	$.each(TimeSafe.error,function(idx,el){errCount += el;});
 	var warnCount = 0;
 	$.each(TimeSafe.warning,function(idx,el){warnCount += el;});
 
+	/*
+	  Set the td modification class
+	*/
+	/*
+	  First strip any old modification information
+	 */
+	$('#td_'+id).removeClass("modified error warning");
 	if(empty) {
-	    wasEntry = false;
+	    /*
+	      If the cell is empty, mark it as modified only if it was originally not empty.
+	     */
 	    project = TimeSafeData.projects[project_idx];
 	    if(project.slot[slot] && project.slot[slot][day] && project.slot[slot][day].id != null) {
-		wasEntry = true;
+		$('#td_'+id).addClass("modified");
 	    }
-	    $('#td_'+id)[0].className=wasEntry?"modified":"";
 	} else {
-	    $('#td_'+id)[0].className=(TimeSafe.error[id]==1)?"error":((TimeSafe.warning[id]==1)?"warning":"modified");
+	    /*
+	      A non-empty cell gets the error tag if it contains an error, etc.
+	     */
+	    $('#td_'+id).addClass((TimeSafe.error[id]==1)?"error":((TimeSafe.warning[id]==1)?"warning":"modified"));
 	}
 
+	/*
+	  Disable save button and notify user of why if we have errors. War user if we have warnings.
+	*/
 	$('#save')[0].disabled = errCount > 0;
 	$('#notification_global')[0].innerHTML = (errCount>0)?'There are errors in your hour registration. Correct them before proceeding':((warnCount>0)?'There are warnings in your hour registration. Make sure that they are ok before proceeding.':'');
     },
@@ -503,6 +556,16 @@ var TimeSafe = {
 	event.stopPropagation();
     },
 
+    slotChangeEventHandler: function(event){
+	TimeSafe.validate(event.target.idStr);
+	day = event.target.idStr.split('_')[2];
+	TimeSafe.showSum(day);
+    },
+
+    slotFocusEventHandler: function(event){
+	if(!TimeSafe.dragStart)
+	    TimeSafe.sidebarShow('sidebar_'+event.target.idStr);
+    },
     /**
        Make an input cell with the fancy popup dialog and everything else
      */
@@ -538,9 +601,9 @@ var TimeSafe = {
 	res.onclick=TimeSafe.eventStopper;
 
 	var input = res.childNodes[0];
-	input.onchange=function(){TimeSafe.validate(idStr);TimeSafe.showSum(day);};
-	input.onfocus=function(event){if(!TimeSafe.dragStart)TimeSafe.sidebarShow('sidebar_'+event.target.idStr);};
-	input.onkeypress=TimeSafe.slotHandleArrowKeys;
+	input.onchange=TimeSafe.slotChangeEventHandler;
+	input.onfocus=TimeSafe.slotFocusEventHandler;
+	input.onkeypress=TimeSafe.slotKeypressEventHandler;
 	
 	input.id="time_" + idStr;
 	input.name="time_" + idStr;

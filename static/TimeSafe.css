@@ -167,3 +167,17 @@ tbody#time_body input:hover
     cursor: pointer;
 /*    background: #eee;*/
 }
+
+body.dragging input.time
+{
+    cursor:move;
+}
+
+body.copying input.time
+{
+    cursor:copy;
+}
+
+body .dnd_drop{
+   background: #bfbfff;
+}
