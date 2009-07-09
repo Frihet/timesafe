@@ -9,7 +9,6 @@ extends Controller
 	
     private $content="";
     private $action_items=array();
-    
 
     function add($header, $text)
     {
@@ -51,6 +50,16 @@ The easiest way to navigate in timesafe is usually to use the keyboard. When a c
 If you need to report hours to the same project int the same day more than once, e.g. with a different set of tags, you can create an extra line by clicking the «+» right next to the project name. This will create a new, empty row in the form.
 </p>
 ");
+
+        $this->add("Copying or moving reported hours", "
+<p>
+TimeSafe supports simple drag-and-drop in order to allow you to move or copy reported times. To copy the contents of a cell, press the control key and drag the hours from one cell to another. To move the hours, hold down the shift key instead while performing the operation. When copying or moving, the hours, the description, and tag selection is transferred over to the new cell.
+</p>
+<p>
+Note that some browsers automatically perform drag-and-drop when moving a selection from one text element to another. This only moves the hours, and not the tags or description. This feature is outside the control of TimeSafe.
+</p>
+");
+        
 
         $this->add("Project visibility", "
 <p>

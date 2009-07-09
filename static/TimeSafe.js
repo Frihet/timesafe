@@ -14,16 +14,20 @@ window.onload = function(evt) {
     };
 
     $('body')[0].onmousedown = function(e){
+	//debug('down');
 	TimeSafe.dragStart = null;
-	if(e.target.className== "time" && (e.shiftKey || e.ctrlKey) && e.target.value != "") {
+
+	if(e.target.className== "time" && (e.shiftKey || e.ctrlKey) && e.target.value != "" ) {
+	    //debug("DND start");
 	    var copying = e.ctrlKey;
 	    TimeSafe.dragIsCopy = copying;
 	    TimeSafe.dragStart = e.target;
 	    TimeSafe.sidebarHide();
 	    $('body').addClass(copying?'copying':'dragging');
-
+	    
 	    $('body')[0].onmousemove = function(e) {
 		old = TimeSafe.dragOver;
+		//debug('move');
 		
 		TimeSafe.dragOver = TimeSafe.getElementAtPosition($('input.time'), e.getCoordinate());
 		
@@ -32,11 +36,18 @@ window.onload = function(evt) {
 			$(old).removeClass("dnd_drop");
 		    $(TimeSafe.dragOver).addClass("dnd_drop");
 		}
+		return false;
 	    }
+	    return false;
 	}
 	
     }
-    
+    /*
+    $('body')[0].onmouseout = function(e){
+	if(TimeSafe.dragStart)
+	    debug('out');
+    }
+    */
     $('body')[0].onmouseup = function(e){
 	$('body').removeClass('dragging copying');
 	$('body')[0].onmousemove = null;
@@ -211,7 +222,8 @@ var TimeSafe = {
 	/*
 	  Validate
 	 */
-	TimeSafe.validate(to.idStr)
+	TimeSafe.validate(to.idStr);
+	TimeSafe.showSum(to.idStr.split('_')[2]);
     },
     
     stripCellContent: function(from) {
@@ -225,12 +237,13 @@ var TimeSafe = {
 	/*
 	  Validate
 	 */
-	TimeSafe.validate(from.idStr)
+	TimeSafe.validate(from.idStr);
+	TimeSafe.showSum(from.idStr.split('_')[2]);
     },
     
     /**
        Show sidebar with specified id
-     */
+    */
     sidebarShow: function(id) {
 	var newSidebar = $('#'+id)[0];
 	if (!newSidebar) { 
@@ -248,7 +261,7 @@ var TimeSafe = {
     
     /**
        Hide current sidebar, if any
-     */
+    */
     sidebarHide: function() {
 	if (TimeSafe.currentSidebar != null) {
 	    TimeSafe.currentSidebar.style.display='none';
@@ -259,7 +272,7 @@ var TimeSafe = {
     /**
        Handle arrow keys and excepe key if pressed in one of the cells by moving around.
        Moving up and down is way harder than it should be. Maybe we could use table row stuff to find previous index?
-     */
+    */
     slotKeypressEventHandler: function(evt) {
 	evt = (evt) ? evt : ((window.event) ? event : null);
 	if (evt) {
@@ -317,7 +330,7 @@ var TimeSafe = {
 		    row=row.parentNode;
 		}
 		if(row && row.style.display=='none') {
-		    TimeSafe.slotHandleArrowKeys({'target':el, 'keyCode':evt.keyCode});
+		    TimeSafe.slotKeypressEventHandler({'target':el, 'keyCode':evt.keyCode});
 		}
 		else {
 		    el.focus();
@@ -328,7 +341,7 @@ var TimeSafe = {
     
     /**
        Clear notification area in specified sidebar
-     */
+    */
     notifyClear: function(id)
     {
 	var notification = $('#notification_'+id)[0];
@@ -337,7 +350,7 @@ var TimeSafe = {
 
     /**
        Add notification in specified sidebar
-     */
+    */
     notify:function(id, msg)
     {
 	var notification = $('#notification_'+id)[0];
@@ -346,7 +359,7 @@ var TimeSafe = {
 
     /**
        Validate that all tags are filled out correctly
-     */
+    */
     validateTags: function(id) {
 	var sel = $('#tag_'+id)[0];
 	var project = TimeSafeData.projects[id.split('_')[0]];
@@ -382,7 +395,7 @@ var TimeSafe = {
 
     /**
        Validate specified time entry
-     */
+    */
     validate: function(id)
     {
 	TimeSafe.warning[id] = 0;
@@ -473,7 +486,7 @@ var TimeSafe = {
 
     /**
        Format a number of minutes into something suitable for human reading
-     */
+    */
     formatTime : function(tm)
     {
 	switch(tm%60) {
@@ -488,7 +501,7 @@ var TimeSafe = {
     
     /**
        Returns a DOM node suitable for using as a text status field.
-     */
+    */
     makeText: function(id, content) {
 	var res = document.createElement("span");
 	if(id) {
@@ -502,7 +515,7 @@ var TimeSafe = {
 
     /**
        Make a select box with tags for the specified project
-     */
+    */
     makeTagSelect: function(line, selected) {
 	var tags = document.createElement('select');
 	tags.multiple=true;
@@ -522,14 +535,14 @@ var TimeSafe = {
 
     /**
        Update the sum cell for the specified day
-     */
+    */
     showSum: function(day) {
 	$('#hour_sum_' + day)[0].innerHTML = TimeSafe.formatTime(TimeSafe.calcSum(day));
     },
 
     /**
        Calculate the number of hours worked for the specified day
-     */
+    */
     calcSum: function(day) {
 	var tm = 0.0;
 	for( var line = 0; line < TimeSafe.projectLines; line++) {
@@ -551,7 +564,7 @@ var TimeSafe = {
 
     /**
        Event handler that simply stops propagation of event
-     */
+    */
     eventStopper: function(event){
 	event.stopPropagation();
     },
@@ -604,7 +617,13 @@ var TimeSafe = {
 	input.onchange=TimeSafe.slotChangeEventHandler;
 	input.onfocus=TimeSafe.slotFocusEventHandler;
 	input.onkeypress=TimeSafe.slotKeypressEventHandler;
-	
+	/*
+	input.onmousedown=function(e){
+	    e.target.focus(); 
+	    
+	    return false;
+	}
+	*/
 	input.id="time_" + idStr;
 	input.name="time_" + idStr;
 	input.idStr = idStr;
