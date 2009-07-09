@@ -100,6 +100,11 @@ th.weekend
     color: #fcc;
 }
 
+th.weekend, th.weekday
+{
+    text-align:center;
+}
+
 .hour_sum {
     text-align: right;
     font-weight:bold;
@@ -160,4 +165,5 @@ tbody#time_body input:hover
 .add_line
 {
     cursor: pointer;
+/*    background: #eee;*/
 }

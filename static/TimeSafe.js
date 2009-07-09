@@ -12,6 +12,31 @@ window.onload = function(evt) {
     $('body')[0].onclick = function (event) {
 	TimeSafe.sidebarHide();
     };
+
+    $('body')[0].onmousedown = function(e){
+	TimeSafe.dragStart = null;
+	if(e.target.className== "time") {
+	    TimeSafe.dragStart = e.target;
+	    TimeSafe.sidebarHide();
+	}
+    }
+
+    $('body')[0].onmouseup = function(e){
+	dragStart = TimeSafe.dragStart;
+	if(dragStart) {
+	    var dragStop = TimeSafe.getElementAtPosition($('input.time'), e.getCoordinate());
+	    if(dragStop && dragStop.className=="time" ) {
+		if(dragStop != TimeSafe.dragStart) {
+		    TimeSafe.moveCellContent(TimeSafe.dragStart,dragStop);
+		} else {
+		    sidebarId = 'sidebar_' + dragStart.idStr;
+		    TimeSafe.sidebarShow(sidebarId);
+		}
+	    }
+	}
+	TimeSafe.dragStart = null;
+    }
+
 }
 
 /**
@@ -23,7 +48,7 @@ String.prototype.stripHTML = function () {
 		
 String.prototype.trim = function() {
     return this.replace(/^\s+|\s+$/g,"");
-}
+};
 
 String.prototype.parseTimeNazi = function () 
 {
@@ -39,7 +64,37 @@ String.prototype.parseTimeNazi = function ()
     if (str2.match(/^[0-9]*\.?[0-9]+$/))
 	return (60.0*parseFloat(str2));
     return NaN;
+};
+
+Event.prototype.getCoordinate = function() {
+    if (this.pageX) 	{
+	return [this.pageX, this.pageY];
+    }
+    else if (e.clientX || e.clientY) 	{
+	return [ e.clientX + document.body.scrollLeft + document.documentElement.scrollLeft,
+		 e.clientY + document.body.scrollTop + document.documentElement.scrollTop ];
+    }
+    else return null;
 }
+
+Node.prototype.getAbsolutePosition = function(){
+    var obj = this;
+    var x=0;
+    var y=0;
+    //    debug("Find pos of " + this);
+    //debug("Start with " + x + ", " + y);
+    do {
+	x += obj.offsetLeft;
+	y += obj.offsetTop;
+	//	debug("Add " + obj.offsetLeft + ", " + obj.offsetTop);
+    } while(obj=obj.offsetParent);
+    //debug("Return " + x + ", " + y);
+    return [x, y];
+};
+
+function debug(t){
+    $('#debug')[0].innerHTML += t + "<br/>\n";
+};
 
 /**
    We put everything in a TimeSafe namespace, to minimize risk of name clashes
@@ -51,6 +106,90 @@ var TimeSafe = {
     warning: {},
     currentSidebar: null,
     entryIdLookup: {},
+    dragStart:null,
+
+    getElementAtPosition: function(el, pos){
+
+	//debug("find thing at position " + pos);
+	var i=0;
+	for(var i=0; i<el.length; i++) {
+		value = el[i];
+		/*
+		if(i > 300) {
+		    debug("Too much work, giving up...");
+		    break;
+		}
+		*/
+		var p = value.getAbsolutePosition();
+	
+		if(p[0] == 0) {
+		    continue;
+		}
+	
+		//debug("next element has position " + p);
+		var s = [value.offsetWidth, value.offsetHeight];
+		var inside = true;
+		inside &= pos[0] > p[0];
+		inside &= pos[0] < (p[0]+s[0]);
+		inside &= pos[1] > p[1];
+		inside &= pos[1] < (p[1]+s[1]);
+		if(inside) {
+		    return value;
+		}
+	    };
+	return null;
+    },
+
+    moveCellContent: function(from, to) {
+	//debug("move stuff from " +from.id + " to " + to.id);
+	var toSidebar = $("#sidebar_" + to.idStr)[0];
+	var fromSidebar = $("#sidebar_" + from.idStr)[0];
+
+	/*
+	  Make sure we are initialized at both ends
+	 */
+	fromSidebar.doInit();
+	toSidebar.doInit();
+
+	/*
+	  Move hours
+	*/
+
+	to.value=from.value;
+	from.value="";
+
+	/*
+	  Move description
+	 */
+	toSidebar.description.value = fromSidebar.description.value;
+	fromSidebar.description.value = "";
+
+	/*
+	  Try to move over the tags
+	 */
+	fromTag = fromSidebar.tag.options;
+	toTag = toSidebar.tag.options;
+	for(var i=0; i<toTag.length; i++) {
+	    toTag[i].selected=false;
+	}
+	for(var i=0; i<fromTag.length; i++) {
+	    if(fromTag[i].selected) {
+		for(var j=0; j<toTag.length; j++) {
+		    if(toTag[j].value == fromTag[i].value) {
+			toTag[j].selected=true;
+			break;
+		    }
+		}
+	    }	    
+	    fromTag[i].selected=false;
+	}
+
+	/*
+	  Validate
+	 */
+	TimeSafe.validate(to.idStr)
+	TimeSafe.validate(from.idStr)
+    },
     
     /**
        Show sidebar with specified id
@@ -66,10 +205,7 @@ var TimeSafe = {
 	}
 	
 	TimeSafe.currentSidebar = newSidebar;
-	if (!newSidebar.init) {
-	    newSidebar.doInit();
-	    newSidebar.init = true;
-	}
+	newSidebar.doInit();
 	TimeSafe.currentSidebar.style.display="block";
     },
     
@@ -403,10 +539,12 @@ var TimeSafe = {
 
 	var input = res.childNodes[0];
 	input.onchange=function(){TimeSafe.validate(idStr);TimeSafe.showSum(day);};
-	input.onfocus=function(){TimeSafe.sidebarShow(sidebarId);};
+	input.onfocus=function(event){if(!TimeSafe.dragStart)TimeSafe.sidebarShow('sidebar_'+event.target.idStr);};
 	input.onkeypress=TimeSafe.slotHandleArrowKeys;
+	
 	input.id="time_" + idStr;
 	input.name="time_" + idStr;
+	input.idStr = idStr;
 	
 	if(project.slot[slot] && project.slot[slot][day]) {
 	    input.value=TimeSafe.formatTime(project.slot[slot][day].minutes);
@@ -456,6 +594,9 @@ var TimeSafe = {
 		entryId.value=project.slot[slot][day].id;
 		anchor.appendChild(entryId);
 	    }	
+	    sidebar.tag=tagSelect;
+	    sidebar.description=description;
+	    sidebar.doInit=function(){}
 	}
 	return res;
     },
@@ -516,7 +657,7 @@ var TimeSafe = {
 
 	if(slotIdx ==0) {
 	    var link = document.createElement('a');
-	    link.innerHTML = '+';
+	    link.innerHTML = '&nbsp;+&nbsp;';
 	    link.className="add_line"
 	    link.onclick = function(event) {
 		TimeSafe.addProjectSlot(tbody, project);
