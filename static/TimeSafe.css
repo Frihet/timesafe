@@ -168,14 +168,21 @@ tbody#time_body input:hover
 /*    background: #eee;*/
 }
 
-body.dragging input.time
+body.dragging input.time,
+body.dragging
 {
     cursor:move;
 }
 
-body.copying input.time
+body.copying input.time,
+body.copying
 {
-    cursor:copy;
+    cursor:copy;    
+}
+
+#dnd_text
+{
+    cursor: inherit;
 }
 
 body .dnd_drop{

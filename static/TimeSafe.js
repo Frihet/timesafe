@@ -13,6 +13,9 @@ window.onload = function(evt) {
 	TimeSafe.sidebarHide();
     };
 
+    /**
+       Here comes the drag-and-drop enabling code
+     */
     $('body')[0].onmousedown = function(e){
 	//debug('down');
 	TimeSafe.dragStart = null;
@@ -24,10 +27,16 @@ window.onload = function(evt) {
 	    TimeSafe.dragStart = e.target;
 	    TimeSafe.sidebarHide();
 	    $('body').addClass(copying?'copying':'dragging');
-	    
+	    var dnd_text = $('#dnd_text')[0];
+	    dnd_text.innerHTML = e.target.value;
+	    dnd_text.style.display='block';
+	    dnd_text.style.left=""+e.getCoordinate()[0]+"px";
+	    dnd_text.style.top=""+e.getCoordinate()[1]+"px";
+
 	    $('body')[0].onmousemove = function(e) {
 		old = TimeSafe.dragOver;
-		//debug('move');
+		dnd_text.style.left=""+e.getCoordinate()[0]+"px";
+		dnd_text.style.top=""+e.getCoordinate()[1]+"px";
 		
 		TimeSafe.dragOver = TimeSafe.getElementAtPosition($('input.time'), e.getCoordinate());
 		
@@ -53,6 +62,8 @@ window.onload = function(evt) {
 	$('body')[0].onmousemove = null;
 	dragStart = TimeSafe.dragStart;
 	TimeSafe.dragOver = TimeSafe.getElementAtPosition($('input.time'), e.getCoordinate());
+	var dnd_text = $('#dnd_text')[0];
+	dnd_text.style.display='none';
 	
 	if(TimeSafe.dragOver){
 	    $(TimeSafe.dragOver).removeClass("dnd_drop");
@@ -74,20 +85,29 @@ window.onload = function(evt) {
 	}
 	TimeSafe.dragStart = null;
     }
-
+    TimeSafe.addProjectLines();
 }
 
-/**
+/*
    Add a few nice-to-have prototype functions
+ */
+/**
+   Strip a string of all xml tags
  */
 String.prototype.stripHTML = function () {
     return this.replace(/<[^>]*>/g, "");
 }
-		
+    
+/**
+   Strip a string of whitepace at beginning and end
+ */
 String.prototype.trim = function() {
     return this.replace(/^\s+|\s+$/g,"");
 };
 
+/**
+   Useful extra string function to parse an entire string as a time number accepting various formats.
+*/
 String.prototype.parseTimeNazi = function () 
 {
     str = new String(this);
@@ -104,6 +124,9 @@ String.prototype.parseTimeNazi = function ()
     return NaN;
 };
 
+/**
+   Useful extra function that allows you to get the actual window coordinates of an event.
+ */
 Event.prototype.getCoordinate = function() {
     if (this.pageX) 	{
 	return [this.pageX, this.pageY];
@@ -115,6 +138,9 @@ Event.prototype.getCoordinate = function() {
     else return null;
 }
 
+/**
+   Useful extra function that allows you to calculate the actual window coordinates of an arbirary DOM node.
+ */
 Node.prototype.getAbsolutePosition = function(){
     var obj = this;
     var x=0;
@@ -130,12 +156,16 @@ Node.prototype.getAbsolutePosition = function(){
     return [x, y];
 };
 
+/**
+   Show a debug message in the main browser window. Useful when alerts
+   get in the way but you want to do interactive debuging.
+ */
 function debug(t){
     $('#debug')[0].innerHTML += t + "<br/>\n";
 };
 
 /**
-   We put everything in a TimeSafe namespace, to minimize risk of name clashes
+   We put everything in a TimeSafe namespace, to minimize risk of name clashes.
  */
 var TimeSafe = {
 
@@ -146,6 +176,11 @@ var TimeSafe = {
     entryIdLookup: {},
     dragStart:null,
 
+    /**
+       Go through the specified list of nodes, and return the firt one
+       that contains the specified coordinate, or null if no node
+       does.
+     */
     getElementAtPosition: function(el, pos){
 
 	//debug("find thing at position " + pos);
@@ -178,6 +213,9 @@ var TimeSafe = {
 	return null;
     },
 
+    /**
+       Copies the contents of cell from to cell to.
+     */
     copyCellContent: function(from, to) {
 	//debug("move stuff from " +from.id + " to " + to.id);
 	var toSidebar = $("#sidebar_" + to.idStr)[0];
@@ -226,6 +264,9 @@ var TimeSafe = {
 	TimeSafe.showSum(to.idStr.split('_')[2]);
     },
     
+    /**
+      Strip the specified cell of hours, description, etc, leaving it empty.
+     */
     stripCellContent: function(from) {
 	var fromSidebar = $("#sidebar_" + from.idStr)[0];
 	fromSidebar.doInit();

@@ -102,6 +102,7 @@ extends Controller
     {
         $content = "";
         $content .= "<div id='debug' style='position:absolute;right: 100px;'></div>";
+        $content .= "<div id='dnd_text' style='position:absolute;left: 0px;top: 0px; display:none;'></div>";
         $form = "";
         
         if (param('entry')!==null) {
@@ -202,7 +203,7 @@ where e.id=:id', array(':id'=>$e));
             $form .= ",\n\tentry: " . $entry;
         }
         
-        $form .= "\n};\nTimeSafe.addProjectLines();\n</script>\n\n";
+        $form .= "\n};\n</script>\n\n";
 
         $from=date('Y-m-d',Entry::getBaseDate()-3600*24*(Entry::getDateCount()-1));
         $to=date('Y-m-d',Entry::getBaseDate()+3600*24);
