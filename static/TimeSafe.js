@@ -60,7 +60,7 @@ window.onload = function(evt) {
     $('body')[0].onmouseup = function(e){
 	$('body').removeClass('dragging copying');
 	$('body')[0].onmousemove = null;
-	dragStart = TimeSafe.dragStart;
+	var dragStart = TimeSafe.dragStart;
 	TimeSafe.dragOver = TimeSafe.getElementAtPosition($('input.time'), e.getCoordinate());
 	var dnd_text = $('#dnd_text')[0];
 	dnd_text.style.display='none';
@@ -110,8 +110,8 @@ String.prototype.trim = function() {
 */
 String.prototype.parseTimeNazi = function () 
 {
-    str = new String(this);
-    str_arr = str.split(':');
+    var str = new String(this);
+    var str_arr = str.split(':');
     if (str_arr.length == 2) {
 	if (str_arr[0].match(/^[0-9]*$/) && str_arr[1].match(/^[0-9]+$/))
 	    return 60*(str_arr[0].length>0?parseInt(str_arr[0]):0) + parseInt(str_arr[1]);
@@ -186,7 +186,7 @@ var TimeSafe = {
 	//debug("find thing at position " + pos);
 	var i=0;
 	for(var i=0; i<el.length; i++) {
-		value = el[i];
+		var value = el[i];
 		/*
 		if(i > 300) {
 		    debug("Too much work, giving up...");
@@ -317,7 +317,7 @@ var TimeSafe = {
     slotKeypressEventHandler: function(evt) {
 	evt = (evt) ? evt : ((window.event) ? event : null);
 	if (evt) {
-	    input_id = evt.target.id;
+	    var input_id = evt.target.id;
 	    var el=null;
 	    var id_data_str = $('#'+input_id)[0].id.split('_');
 	    var id_data=[parseInt(id_data_str[1]), parseInt(id_data_str[2]), parseInt(id_data_str[3]) ];
@@ -369,17 +369,16 @@ var TimeSafe = {
 		break;
 	    }
 
-	    if(evt.ctrlKey || evt.keyCode==116){
+	    if(evt.ctrlKey || evt.keyCode==116 || evt.keyCode==9){
 		ignore=false;
 	    }
-		
-
+	    
 	    var ch = String.fromCharCode(evt.which);
 	    if(ch>='0' && ch <= '9'){
 		ignore=false;
 	    }
 
-	    if(ch=='.' || ch==',' || ch==':') {
+	    if(ch=='.' || ch==',' || ch==':' ) {
 		ignore=false;
 	    }
 	    
@@ -529,7 +528,7 @@ var TimeSafe = {
 	    /*
 	      If the cell is empty, mark it as modified only if it was originally not empty.
 	     */
-	    project = TimeSafeData.projects[project_idx];
+	    var project = TimeSafeData.projects[project_idx];
 	    if(project.slot[slot] && project.slot[slot][day] && project.slot[slot][day].id != null) {
 		$('#td_'+id).addClass("modified");
 	    }
