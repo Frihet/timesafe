@@ -322,6 +322,7 @@ var TimeSafe = {
 	    var id_data_str = $('#'+input_id)[0].id.split('_');
 	    var id_data=[parseInt(id_data_str[1]), parseInt(id_data_str[2]), parseInt(id_data_str[3]) ];
 	    
+	    var ignore = false;
 	    switch (evt.keyCode) {
 	    case 37:
 		// Move left
@@ -360,6 +361,26 @@ var TimeSafe = {
 	    case 27:
 		TimeSafe.sidebarHide();
 		break;
+	    case 8:
+	    case 46:
+		break;
+	    default: 
+		ignore=true;
+		break;
+	    }
+
+	    if(evt.ctrlKey || evt.keyCode==116){
+		ignore=false;
+	    }
+		
+
+	    var ch = String.fromCharCode(evt.which);
+	    if(ch>='0' && ch <= '9'){
+		ignore=false;
+	    }
+
+	    if(ch=='.' || ch==',' || ch==':') {
+		ignore=false;
 	    }
 	    
 	    if (el) {
@@ -371,12 +392,13 @@ var TimeSafe = {
 		    row=row.parentNode;
 		}
 		if(row && row.style.display=='none') {
-		    TimeSafe.slotKeypressEventHandler({'target':el, 'keyCode':evt.keyCode});
+		    return TimeSafe.slotKeypressEventHandler({'target':el, 'keyCode':evt.keyCode});
 		}
 		else {
 		    el.focus();
 		}
 	    }
+	    return !ignore;
 	}
     },
     
