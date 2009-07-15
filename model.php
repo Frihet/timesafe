@@ -179,13 +179,16 @@ extends dbItem
     var $is_resource;
 
     var $_project_class=null;
+    var $_open;
     
     static $_items;
 
-    function __construct($arr) 
+    function __construct($arr, $is_item=true) 
     {
+        $this->table = "tr_project";
         $this->initFromArray($arr);
-        Project::$_items[$this->id] = $this;
+        if($is_item)
+            Project::$_items[$this->id] = $this;
     }
     
         
@@ -244,7 +247,7 @@ order by p.name",
 	    //message($row['tralala']);
             $p = new Project($row);
         }        
-
+        
         foreach(db::fetchList("select project_id, project_class_id from tr_project_project_class") as $row) {
             if(array_key_exists($row['project_id'],Project::$_items))
                 Project::$_items[$row['project_id']]->_project_class[]= $row['project_class_id'];
@@ -254,8 +257,21 @@ order by p.name",
     function getEgsMapping()
     {
         $mapping = array();
-        foreach(db::fetchList("select id, egs_id from tr_project where open=true") as $row) {
-            $mapping[$row['egs_id']] = $row['id'];
+        $temp = array();
+        foreach(db::fetchList("select * from tr_project") as $row) {
+            $p = new Project($row, false);
+            $p->_open = $row['open'];
+            
+            $mapping[$row['egs_id']] = $p;
+            $temp[$row['id']] = $p;
+        }
+
+        foreach(db::fetchList("
+select project_id, project_class_id 
+from tr_project_project_class") as $row) {
+            if(array_key_exists($row['project_id'],$temp)) {
+                $temp[$row['project_id']]->_project_class[]= $row['project_class_id'];
+            }
         }
         return $mapping;
     }
@@ -293,10 +309,10 @@ order by p.name",
         db::begin();
         
         $ok  = db::query('update tr_project set name=:name, egs_id=:value, start_date=:d where id=:id',
-                  array(':name'=>$name, 
-                        ':value'=>$egs_id,
-                        ':d'=>$start_date,
-                        ':id'=>$id));        
+                         array(':name'=>$name, 
+                               ':value'=>$egs_id,
+                               ':d'=>$start_date,
+                               ':id'=>$id));        
         $ok &= db::query('delete from tr_project_project_class where project_id=:id', array(':id'=>$id));
         foreach($project_class as $cl) {
             $ok &= db::query('insert into tr_project_project_class (project_id, project_class_id) values (:pid, :cid)',
@@ -311,6 +327,15 @@ order by p.name",
         }
     }
 
+    function undelete()
+    {
+        db::query('update tr_project set open=true where id=:id',
+                  array(':id'=>$this->id));
+        if (Project::$_items) {
+            Project::$_items[$this->id] = $this;
+        }
+    }
+    
     function delete()
     {
         db::query('update tr_project set open=false where id=:id',

@@ -76,12 +76,12 @@ where u.name = :u";
 	$old_res = db::fetchList($query, $param);
 	$kill = array();
 	foreach($old_res as $res) 
-	{
-	    $kill[$res['egs_id']] = $res;
-	}
+            {
+                $kill[$res['egs_id']] = $res;
+            }
 	
 	foreach( $new_res as $res) 
-	{
+            {
 	    if( array_key_exists($res['id'],$kill) ) 
 	    {
 		$kill[$res['id']] = null;
@@ -114,6 +114,7 @@ where u.name = :u";
         /*
          Update and create projects
          */
+
         foreach($egs as $egs_id => $egs) {
             $external = !preg_match('/^Div[1-7][a-gA-G]? *[:-]/',$egs['name']);
             $exists[$egs_id] = true;
@@ -121,29 +122,37 @@ where u.name = :u";
             $class = array($external?2:1, $technical?3:4);
             
             //message("Project ".$egs['name']." is " . ($external?'external':'internal')
-
+            
             if( array_key_exists($egs_id, $map) ) {
-                if(param('reload_projects')==1) {
-                    Project::update($map[$egs_id],
+                $p = $map[$egs_id];
+                if(!$p->_open){
+                    $p->undelete();
+                    Project::update($map[$egs_id]->id,
+                                    $egs['name'],
+                                    $egs_id, 
+                                    $egs['start_date'],
+                                    $class);
+                } else if($p->name != $egs['name'] || param('reload_projects')==1) {
+                    Project::update($map[$egs_id]->id,
                                     $egs['name'],
                                     $egs_id, 
                                     $egs['start_date'],
                                     $class);
                 }
-                continue;
+            } else {
+                Project::add($egs['name'], 
+                             $egs_id, 
+                             $egs['start_date'],
+                             $class);
             }
-            Project::add($egs['name'], 
-                         $egs_id, 
-                         $egs['start_date'],
-                         $class);
         }
-
+        
         /*
          Mark projects not found in egs as closed
          */
         foreach(Project::getProjects() as $p) {
             if(!array_key_exists($p->egs_id, $exists)) {
-                //message("Entry " . $p->name . " should be deleted");
+                message("Entry " . $p->egs_id . " should be deleted");
                 $p->delete();
             }
         }        
