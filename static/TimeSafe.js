@@ -325,10 +325,17 @@ var TimeSafe = {
 	    var ignore = false;
 	    switch (evt.keyCode) {
 	    case 37:
+		
+		if(evt.ctrlKey || evt.altKey || evt.metaKey || evt.shiftKey){
+		    break;
+		}
 		// Move left
 		el = $('#time_' + id_data[0] + "_" + id_data[1] + "_" + (id_data[2]-1))[0];
 		break;    
 	    case 38:
+		if(evt.ctrlKey || evt.altKey || evt.metaKey || evt.shiftKey){
+		    break;
+		}
 		// Move up
 		el = $('#time_' + id_data[0] + "_" + (id_data[1]-1) + "_" + id_data[2])[0];
 		if (!el) {
@@ -348,10 +355,16 @@ var TimeSafe = {
 		}
 		break;    
 	    case 39:
+		if(evt.ctrlKey || evt.altKey || evt.metaKey || evt.shiftKey){
+		    break;
+		}
 		// Move right
 		el = $('#time_' + id_data[0] + "_" + id_data[1] + "_" + (id_data[2]+1))[0];
 		break;    
 	    case 40:
+		if(evt.ctrlKey || evt.altKey || evt.metaKey || evt.shiftKey){
+		    break;
+		}
 		// Move down
 		el = $('#time_' + id_data[0] + "_" + (id_data[1]+1) + "_" + id_data[2])[0];
 		if (!el) {
@@ -361,15 +374,21 @@ var TimeSafe = {
 	    case 27:
 		TimeSafe.sidebarHide();
 		break;
-	    case 8:
-	    case 46:
-		break;
 	    default: 
 		ignore=true;
 		break;
 	    }
-
-	    if(evt.ctrlKey || evt.keyCode==116 || evt.keyCode==9){
+	    
+	    /*
+	      Don't ignore non-input keys like function keys, tab, etc.
+	     */
+	    if((evt.keyCode > 0 && evt.keyCode < 48) || 
+	       (evt.keyCode >= 112 && evt.keyCode <= 145) || 
+	       (evt.keyCode >= 91 && evt.keyCode <= 93)  ) {
+		ignore=false;
+	    }
+	    
+	    if(evt.ctrlKey || evt.altKey || evt.metaKey){
 		ignore=false;
 	    }
 	    
@@ -394,6 +413,10 @@ var TimeSafe = {
 		    return TimeSafe.slotKeypressEventHandler({'target':el, 'keyCode':evt.keyCode});
 		}
 		else {
+		    /*
+		      Ignore events that cause us to move around
+		     */
+		    ignore=true;
 		    el.focus();
 		}
 	    }
@@ -607,14 +630,11 @@ var TimeSafe = {
     */
     calcSum: function(day) {
 	var tm = 0.0;
-	for( var line = 0; line < TimeSafe.projectLines; line++) {
-	    for (var slot = 0;; slot++) {
+	for( var line = 0; line < TimeSafeData.projects.length; line++) {
+	    for (var slot = 0;slot < TimeSafeData.projects[line].slot.length; slot++) {
 		var idStr = "" + line + "_" + slot + "_" + day;
 		/* This is called so often that it becomes performance critical - avoid jQuery... */
 		var tmInput = document.getElementById('time_' + idStr);
-		if (tmInput == null) {
-		    break;
-		}
 		var dt = tmInput.value.parseTimeNazi();
 		if(!isNaN(dt)) {
 		    tm += dt;
@@ -642,13 +662,14 @@ var TimeSafe = {
 	    TimeSafe.sidebarShow('sidebar_'+event.target.idStr);
     },
     /**
-       Make an input cell with the fancy popup dialog and everything else
+       Make an input cell with the fancy popup dialog and everything else.
+
+       Very performance critical code, avoid using continuations.
      */
     makeTimeInput: function(project, slot, day) {
 	//return document.createElement('span');
 
 	if (TimeSafe.inputTemplate == null) {
-	    
 	    TimeSafe.inputTemplate = document.createElement('span');
 	    
 	    var inp = document.createElement('input');
@@ -666,85 +687,93 @@ var TimeSafe = {
 	    anch.appendChild(sidebar);
 	    
 	    TimeSafe.inputTemplate.appendChild(anch);
-	    
 	}
 	
 	var res = TimeSafe.inputTemplate.cloneNode(true);
-	var currentLine = project.line;
-	var idStr = "" + currentLine + "_" + slot + "_" + day;
+	var idStr = "" + project.line + "_" + slot + "_" + day;
 	var sidebarId = 'sidebar_' + idStr;
-	res.onclick=TimeSafe.eventStopper;
-
 	var input = res.childNodes[0];
-	input.onchange=TimeSafe.slotChangeEventHandler;
-	input.onfocus=TimeSafe.slotFocusEventHandler;
-	input.onkeypress=TimeSafe.slotKeypressEventHandler;
-	/*
-	input.onmousedown=function(e){
-	    e.target.focus(); 
-	    
-	    return false;
-	}
-	*/
+
 	input.id="time_" + idStr;
 	input.name="time_" + idStr;
 	input.idStr = idStr;
+
+	res.onclick=TimeSafe.eventStopper;
+	input.onfocus=TimeSafe.slotFocusEventHandler;
 	
 	if(project.slot[slot] && project.slot[slot][day]) {
 	    input.value=TimeSafe.formatTime(project.slot[slot][day].minutes);
 	    TimeSafe.entryIdLookup[project.slot[slot][day].id] = idStr;
 	}
-	
+
 	var anchor = res.childNodes[1];
 	var sidebar = anchor.childNodes[0];
 	sidebar.id=sidebarId;
-	/*
-	  We delay as much of the table creation as possible, because
-	  it is already painfully slow. With a bit of work, we could
-	  reduce creation further by not creating the div nodes here
-	  either, but sidebarShow would have to be rewritten in that
-	  case.
-	*/
-	sidebar.doInit=function(){
-	    
-	    var tags = (project.slot[slot] && project.slot[slot][day]) ? project.slot[slot][day]._tags : [];
-	    var sidebarContent = document.createElement('div');
-	    sidebar.appendChild(sidebarContent);
+	sidebar.idStr=idStr;
+	sidebar.doInit=TimeSafe.initSidebar;
 
-	    var tagSelect = TimeSafe.makeTagSelect(project, tags);
-	    tagSelect.onchange=function(){TimeSafe.validate(idStr);};
-	    tagSelect.name = "tag_" + idStr + "[]";
-	    tagSelect.id = "tag_" + idStr;
-	    sidebarContent.appendChild(tagSelect);
-	    
-	    var description = document.createElement('textarea');
-	    description.name = "description_" + idStr;
-	    description.id = description.name;
-	    description.onchange=function(){TimeSafe.validate(idStr);};
-	    description.className= "description"
-	    description.rows = 10;
-	    sidebarContent.appendChild(description);
-	    
-	    var notification = document.createElement('span');
-	    notification.id = "notification_" + idStr;
-	    sidebarContent.appendChild(notification);
-	    
-	    if(project.slot[slot] && project.slot[slot][day]) {
-		description.value=project.slot[slot][day].description;
-		
-		var entryId = document.createElement('input');
-		entryId.type='hidden';
-		entryId.name='entry_id_' + idStr;
-		entryId.value=project.slot[slot][day].id;
-		anchor.appendChild(entryId);
-	    }	
-	    sidebar.tag=tagSelect;
-	    sidebar.description=description;
-	    sidebar.doInit=function(){}
-	}
 	return res;
     },
 
+    /**
+       Initialize a sidebar
+
+       We delay as much of the table creation as possible, because it
+       is already painfully slow. With a bit of work, we could reduce
+       creation further by not creating the div nodes during init
+       either, but sidebarShow would have to be rewritten in that
+       case.
+     */
+    initSidebar : function(){
+	var idStr = this.idStr;
+	var project_idx = idStr.split('_')[0];
+	var slot = idStr.split('_')[1];
+	var day = idStr.split('_')[2];
+	var project=TimeSafeData.projects[project_idx];
+	
+	var tags = (project.slot[slot] && project.slot[slot][day]) ? project.slot[slot][day]._tags : [];
+	var sidebarContent = document.createElement('div');
+	var anchor = this.parentNode;
+
+	var input = $('#time_' + idStr)[0];
+
+	input.onchange=TimeSafe.slotChangeEventHandler;
+	input.onkeypress=TimeSafe.slotKeypressEventHandler;
+	
+	this.appendChild(sidebarContent);
+	
+	var tagSelect = TimeSafe.makeTagSelect(project, tags);
+	tagSelect.onchange=function(){TimeSafe.validate(idStr);};
+	tagSelect.name = "tag_" + idStr + "[]";
+	tagSelect.id = "tag_" + idStr;
+	sidebarContent.appendChild(tagSelect);
+	
+	var description = document.createElement('textarea');
+	description.name = "description_" + idStr;
+	description.id = description.name;
+	description.onchange=function(){TimeSafe.validate(idStr);};
+	description.className= "description"
+	description.rows = 10;
+	sidebarContent.appendChild(description);
+	
+	var notification = document.createElement('span');
+	notification.id = "notification_" + idStr;
+	sidebarContent.appendChild(notification);
+	
+	if(project.slot[slot] && project.slot[slot][day]) {
+	    description.value=project.slot[slot][day].description;
+	    
+	    var entryId = document.createElement('input');
+	    entryId.type='hidden';
+	    entryId.name='entry_id_' + idStr;
+	    entryId.value=project.slot[slot][day].id;
+	    anchor.appendChild(entryId);
+	}	
+	this.tag=tagSelect;
+	this.description=description;
+	this.doInit=function(){}
+    },
+    
     /**
        Find the row offset of the first row belonging to the specified project
     */
@@ -793,10 +822,10 @@ var TimeSafe = {
 	    c.appendChild(content);
 	    this.appendChild(c);
 	};
-
+	
 	row.addCell(TimeSafe.makeText('project_'+project.line,
-				      slotIdx==0?project.project_name:""),
-		    'project');
+				      project.project_name),
+		    slotIdx==0?'project':"project disabled");
 	row.id = "row_" + project.line + "_" + slotIdx;
 
 	if(slotIdx ==0) {
