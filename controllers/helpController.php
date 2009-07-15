@@ -44,32 +44,33 @@ TimeSafe is a simple tool for reporting hours worked. It is layed out like a spr
 To perform time reporting, simply click the cell representing the project and day you wish to report for, and enter the number of hours worked and a description of the work performed. It may also be required to select one or more tags. To select multiple tags, hold the Ctrl key while selecting.
 </p>
 <p>
-The easiest way to navigate in timesafe is usually to use the keyboard. When a cell is selected, use the arrow keys to move around between the different cells, and use the tab key to move to the sidebar. Press the escape key to close the sidebar.
+The easiest way to navigate in TimeSafe is usually to use the keyboard. When a cell is selected, use the arrow keys to move around between the different cells. When a cell is selected, a special window (called the sidebar) is opened, allowing you to tag your entry and write a description for it. You can use the tab key or the mouse to move from the focused cell to the sidebar. Press the escape key to close the sidebar.
 </p>
 <p>
-If you need to report hours to the same project int the same day more than once, e.g. with a different set of tags, you can create an extra line by clicking the «+» right next to the project name. This will create a new, empty row in the form.
+
+If you need to report more than one activity belonging to the same project on the same day, e.g.  you need to report sick leave and attending a staff meeting on the same day, you can create an extra line by clicking the «+» right next to the project name. This will create a new, empty row in the form.
 </p>
 ");
 
         $this->add("Copying or moving reported hours", "
 <p>
-TimeSafe supports simple drag-and-drop in order to allow you to move or copy reported times. To copy the contents of a cell, press the control key and drag the hours from one cell to another. To move the hours, hold down the shift key instead while performing the operation. When copying or moving, the hours, the description, and tag selection is transferred over to the new cell.
+TimeSafe supports simple drag-and-drop in order to allow you to move or copy reported entries. To copy the contents of a cell, press the control key and drag the hours from one cell to another. To move the hours, hold down the shift key instead while performing the operation. When copying or moving the hours, the description and tag selection is transferred over to the new cell.
 </p>
 <p>
-Note that some browsers automatically perform drag-and-drop when moving a selection from one text element to another. This only moves the hours, and not the tags or description. This feature is outside the control of TimeSafe.
+Note that some browsers (including FireFox) automatically perform drag-and-drop when used on a selection without holding any modifier key. This only moves the hours, and not the tags or description. This is unfortunate, but the feature is outside the control of TimeSafe.
 </p>
 ");
         
 
         $this->add("Project visibility", "
 <p>
-By default, only newly created projects and projects where you have recently filed hours are visible on the page. To show all projects, click the «Show all projects» checkbox at the top of the registration page.
+By default, only newly created projects and projects where you have recently filed hours are visible on the page. To show all open projects, click the «Show all projects» checkbox at the top of the registration page. TimeSafe never shows closed or archived projects. You will need to reopen them in egs in order to use them in TimeSafe.
 </p>
 ");
         
         $this->add("More on tags", "
 <p>
-Tags are central to the reporting capabilities of TimeSafe. They make it possible to e.g. locate all billable hours worked on any project and other cross-project groupings of hours. Tags can be divided into tag groups, where at most one tag from a specified group can be selected. These tag groups can optionally require that a tag in the group must be selected.
+Tags are central to the reporting capabilities of TimeSafe. They make it possible to e.g. locate all billable hours performed in any project and other cross-project groupings of hours. Tags can be divided into tag groups, where at most one tag from a specified group can be selected. These tag groups can optionally require that a tag in the group must be selected. If an illegal combination of tags has been entered, an error message will be shown, and the cell will be marked in red.
 </p>
 ");
         
@@ -81,16 +82,16 @@ TimeSafe tries to detect invalidly reported hours. The error checks include maki
                        
         $this->add("Speed", "
 <p>
-TimeSafe is very JavaScript intensive. It requires a standards compliant browser to function at all. Because it performs a lot of table manipulation in JavaScript, it will be extremely slow on browsers where such operations are slow, typically on older browsers. If TimeSafe is running slowly, consider updating to the latest browser version.
+TimeSafe is very JavaScript intensive. It requires a modern, standards compliant browser (FireFox 3.0 and 3.5 have both been tested) to function at all. Because it performs a lot of table manipulation in JavaScript, it will be extremely slow on browsers where such operations are slow. If TimeSafe is running slowly, consider updating to the latest browser version.
 </p>
 ");
 
-        $this->add("Administrating TimeSafe", "
+        $this->add("TimeSafe Administration", "
 <p>
-There are only two types of administrative action possible in TimeSafe - changing tag groups and changing tags. The project list is imported from Egs and can not be edited here.
+There are only two types of administrative action possible in TimeSafe - changing tag groups and changing tags. The project list is imported from Egs and can not be edited here. This will change in a future version of the product.
 </p>
 <p>
-A tag can be visible for all project, all external projects, all internal projects, or only one specific project. Each tag has a dropdown where you can chose tag visibility.
+A tag can be visible for all projects, a group of projects, or only one specific project. The project groups are created by the egs importing tool, and can not be edited in the administrative interface. Use the project and project group dropdowns to set the tag visibility.
 </p>
 <p>
 Some tags are almost always used. These can be made recommended, in which case TimeSafe will show a warning if the user has not chosen the tag. This can be used e.g. to create a tag to mark external hours as billable.
@@ -104,7 +105,7 @@ Tags can be put into groups where at most one tag may be chosen. It can be made 
 
         $this->add("Time report integration", "
 <p>
-TimeSafe integration with time report is currently rather kludgy. A future version of the time reporting tool will be significantly more powerful and extensible, but as of yet, time report integration relies on naming tags and tag groups according to specific patterns.
+TimeSafe integration with time report is currently rather kludgy. A future version of the time reporting tool will be significantly more powerful and extensible, but as of yet, time report integration relies on naming tags and tag groups according to specific regexp patterns. If that sentence did not make sense to you, you might want to ask for help before updating the tag and tag group list.
 
 <ul>
 <li>
@@ -131,7 +132,7 @@ Note that some of these tags match agains tag group name, and others against tag
         
         $this->add("Future features", "
 <p>
-There are loads of features in the TimeSafe pipeline. Before requesting a feature, please make sure that this issue is not reported by checking <a href='https://projects.freecode.no/projects/timesafe/issues'>the issue tracker</a>.
+There are loads of features in the TimeSafe pipeline. Before requesting a feature, please make sure that this issue is not reported by checking <a href='https://projects.freecode.no/projects/timesafe/issues'>the issue tracker</a>. New suggestions are welcome, especially those that involve pie.
 </p>
 ");
         
