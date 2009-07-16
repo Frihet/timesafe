@@ -88,7 +88,7 @@ TimeSafe is very JavaScript intensive. It requires a modern, standards compliant
 
         $this->add("TimeSafe Administration", "
 <p>
-There are only two types of administrative action possible in TimeSafe - changing tag groups and changing tags. The project list is imported from Egs and can not be edited here. This will change in a future version of the product.
+There are only two types of administrative actions possible in TimeSafe - changing tag groups and changing tags. The project list is imported from egs and can not be edited here. This will change in a future version of the product.
 </p>
 <p>
 A tag can be visible for all projects, a group of projects, or only one specific project. The project groups are created by the egs importing tool, and can not be edited in the administrative interface. Use the project and project group dropdowns to set the tag visibility.
@@ -125,8 +125,9 @@ The <i>group name</i> for all types of illness must match the perl regexp /^(ill
 </li>
 <li>
 The <i>group name</i> for all types of paying non-work must match the perl regexp /^paying non[- ]?work$/i. For example «Paying non-work» would match.
+</li>
 </ul>
-Note that some of these tags match agains tag group name, and others against tag name. All the matches are case insensitive.
+Note that some of these tags match against tag group name, and others against tag name. All the matches are case insensitive.
 </p>
 ");
         
