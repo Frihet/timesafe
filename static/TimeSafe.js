@@ -2,6 +2,10 @@
   Some init code to run when page is created
  */
 window.onload = function(evt) {
+    if (typeof TimeSafeData == 'undefined' ) {
+	return;
+    }
+
     document.onkeypress = function(evt) {
 	evt = (evt) ? evt : ((window.event) ? event : null);
 	if (evt && evt.keyCode == 27) {
@@ -49,7 +53,6 @@ window.onload = function(evt) {
 	    }
 	    return false;
 	}
-	
     }
     /*
     $('body')[0].onmouseout = function(e){
