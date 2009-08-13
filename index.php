@@ -12,8 +12,10 @@ extends Application
     function __construct()
     {
         $this->addScript('static/TimeSafe.js');
+        //$this->addScript('static/jquery-ui.js');
         //$this->addScript('static/jquery.flot.js');
         $this->addStyle('static/TimeSafe.css');
+        //$this->addStyle('static/jquery-ui.css');
 	require_once('egs.php');
 
     }
@@ -36,15 +38,15 @@ extends Application
         echo "<ul>\n";
  
         echo "<li>";
-	echo makeLink("?controller=editor", "Time registration", $is_tr?'selected':null);
+	echo makeLink(makeUrl(array("controller"=>null)), "Time registration", $is_tr?'selected':null);
         echo "</li>\n";
 
         echo "<li>";
-	echo makeLink("?controller=admin", "Administration", $is_admin?'selected':null);
+	echo makeLink(makeUrl(array("controller"=>"admin")), "Administration", $is_admin?'selected':null);
         echo "</li>\n";
         
         echo "<li>";
-	echo makeLink("?controller=help", "Help", $is_help?'selected':null);
+	echo makeLink(makeUrl(array("controller"=>"help")), "Help", $is_help?'selected':null);
         echo "<li>";
         
         echo "</ul></div></div>\n";
@@ -60,6 +62,9 @@ extends Application
         return "TimeSafe";
     }
     
+}
+if(defined('FC_URL_PATH')) {
+    util::$path= FC_URL_PATH;
 }
 
 $app = new MyApp();

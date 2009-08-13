@@ -35,7 +35,7 @@ extends Controller
         $project_class_values = array(null=>'None')+ Project::getProjectClassNames();
         $group_values =         array(null => 'None')+TagGroup::getTagGroups();
 
-        $hidden = array('action'=>'admin','task'=>'saveTag');
+        $hidden = array('controller'=>'admin','task'=>'saveTag');
         
         foreach(array_merge(Tag::fetch(),array(new Tag())) as $tag) {
             
@@ -71,7 +71,7 @@ extends Controller
         $form .= "<th></th>";
         $form .= "</tr>";
         $idx = 0;
-        $hidden = array('action'=>'admin','task'=>'saveTagGroup');
+        $hidden = array('controller'=>'admin','task'=>'saveTagGroup');
         foreach(TagGroup::fetch() as $tag_group) {
             
             $form .= "<tr>";
@@ -127,7 +127,7 @@ extends Controller
                 }
             }
         }
-        util::redirect(makeUrl(array('action'=>'admin','task'=>'view')));
+        util::redirect(makeUrl(array('controller'=>'admin','task'=>'view')));
     }
     
     function saveTagGroupRun()
@@ -140,6 +140,7 @@ extends Controller
             if (!array_key_exists($id_key, $_REQUEST)) {
                 break;
             }
+            
             $id = param($id_key);
             $name = param("tag_group_name_$idx");
             $required = param("tag_group_required_$idx");
@@ -161,7 +162,7 @@ extends Controller
             $t->save();
         }
         
-        util::redirect(makeUrl(array('action'=>'admin','task'=>'view')));
+        util::redirect(makeUrl(array('controller'=>'admin','task'=>'view')));
         
     }
     

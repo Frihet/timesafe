@@ -185,6 +185,12 @@ body.copying
     cursor: inherit;
 }
 
-body .dnd_drop{
+body .dnd_drop
+{
    background: #bfbfff;
+}
+
+.disabled
+{
+    color: grey;
 }
