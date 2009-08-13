@@ -6,3 +6,5 @@ RewriteRule ^([a-zA-Z_][a-zA-Z0-9_]*)$ ?controller=$1&%{QUERY_STRING}
 RewriteRule ^([a-zA-Z_][a-zA-Z0-9_]*)/([a-zA-Z_][a-zA-Z0-9_]*)$ ?controller=$1&task=$2&%{QUERY_STRING}
 RewriteRule ^([a-zA-Z_][a-zA-Z0-9_]*)/([0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9])/([a-zA-Z_][a-zA-Z0-9_]*)$ ?controller=$1&date=$2&user=$3&%{QUERY_STRING}
 RewriteRule ^([a-zA-Z_][a-zA-Z0-9_]*)/([0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9])$ ?controller=$1&date=$2&%{QUERY_STRING}
+RewriteRule ^([0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9])/([a-zA-Z_][a-zA-Z0-9_]*)$ ?date=$1&user=$2&%{QUERY_STRING}
+RewriteRule ^([0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9])$ ?date=$1&%{QUERY_STRING}
