@@ -94,12 +94,14 @@ There are only two types of administrative actions possible in TimeSafe - changi
 A tag can be visible for all projects, a group of projects, or only one specific project. The project groups are created by the egs importing tool, and can not be edited in the administrative interface. Use the project and project group dropdowns to set the tag visibility.
 </p>
 <p>
-Some tags are almost always used. These can be made recommended, in which case TimeSafe will show a warning if the user has not chosen the tag. This can be used e.g. to create a tag to mark external hours as billable.
+Some tags are almost always used. These can be made recommended, in which case TimeSafe will show a warning if the user has not chosen the tag. This can be used e.g. to create a tag to mark external hours as billable. 
 </p>
 <p>
 Tags can be put into groups where at most one tag may be chosen. It can be made mandatory to pick one tag in a group, or it can be optional. Toggle the 'required' checkbox of a tag group to choose this. 
 </p>
-
+<p>
+Please not the difference between recommending tags and requiring them. Id a recommended tag is not chosen, a warning will be displayed. If a tag group is required, one of the tags in that group must be chosen. 
+</p>
 ");
         
 
