@@ -113,7 +113,7 @@ where u.name = :u";
 
         /*
          Update and create projects
-         */
+        */
 
         foreach($egs as $egs_id => $egs) {
             $external = !preg_match('/^Div[1-7][a-gA-G]? *[:-]/',$egs['name']);
