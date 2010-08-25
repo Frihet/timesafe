@@ -6,7 +6,7 @@
 
    This will need to be improved in the future, e.g. 1.1 or 2.0.
    */
-require_once('FCToolkit.php');
+require_once('FCToolkit/FCToolkit.php');
 
 class TsLdap
 {

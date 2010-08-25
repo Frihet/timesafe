@@ -21,6 +21,7 @@ create table tr_user
 (
 	id serial not null primary key,
 	name varchar(256) not null,
+	password varchar(256) not null,
 	fullname varchar(256) not null,
 	deleted boolean not null default false
 );
@@ -43,6 +44,14 @@ create table tr_entry
 	description varchar(65536) not null
 );
 
+
+create table tr_project_class
+(
+	id serial not null primary key,
+	name varchar(64) not null,
+	deleted boolean not null default false
+);
+
 create table tr_tag_group
 (
 	id serial not null primary key,
@@ -54,6 +63,7 @@ create table tr_tag
 (
 	id serial not null primary key,
 	name varchar(256) not null,
+	visibility integer,
 	project_class_id int references tr_project_class(id),
 	project_id int references tr_project(id),
 	group_id int references tr_tag_group(id),
@@ -68,13 +78,6 @@ create table tr_tag_map
 	tag_id int not null references tr_tag(id)
 );
 
-create table tr_project_class
-(
-	id serial not null primary key,
-	name varchar(64) not null,
-	deleted boolean not null default false
-);
-
 create table tr_project_project_class
 (
 	id serial not null primary key,
@@ -83,7 +86,7 @@ create table tr_project_project_class
 );	
 
 
-insert into tr_user(name, fullname) values ('nooslilaxe','Axel Liljencrantz');
+insert into tr_user(name, password, fullname) values ('admin',md5('admin'),'Admin Adminsson');
 
 insert into tr_tag(name, visibility) values ('Billable',0);
 insert into tr_tag(name, visibility) values ('40 % overtime',0);

@@ -181,7 +181,7 @@ extends dbItem
     var $_project_class=null;
     var $_open;
     
-    static $_items;
+    static $_items = array();
 
     function __construct($arr, $is_item=true) 
     {
@@ -547,12 +547,14 @@ extends DbItem
     public $id;
     public $name;
     public $fullname;
+    public $password;
 
-    function __construct($id, $name, $fullname) 
+    function __construct($id, $name, $fullname, $password) 
     {
 	$this->id = $id;
 	$this->name = $name;
 	$this->fullname = $fullname;
+	$this->password = $password;
         
         User::$_all[$this->name] = $this;
     }
@@ -567,7 +569,7 @@ extends DbItem
 	self::$_all = array();
 	foreach(db::query('select * from tr_user where deleted=false order by fullname') as $row) 
 	{
-	    new User($row['id'], $row['name'], $row['fullname']);
+	    new User($row['id'], $row['name'], $row['fullname'], $row['password']);
 	}
 	return self::$_all;
     }
