@@ -169,6 +169,76 @@ order by perform_date", array(':user_id'=>User::$user->id,
 }
 
 
+class ProjectClass
+extends DbItem
+{
+
+    var $id;
+    var $name;
+    var $deleted;
+    
+    static $_project_class_cache;
+
+    function __construct($param=null) 
+    {
+        $this->table = 'tr_project_class';
+	$this->deleted = false;
+        if($param) {
+            if ((int)$param == $param) {
+                $this->load($param);
+            }
+            else if (is_array($param)) {
+                $this->initFromArray($param);
+            }
+        }
+    }
+
+    function delete($id) 
+    {
+        db::query("update tr_project_class set deleted = true where id=:id", 
+                  array(':id'=>$id));
+    }
+    
+    function getProjectClasses() 
+    {
+        return self::fetch();
+    }
+
+    function getName($project_class_id) 
+    {
+        $project_class_list = self::fetch();
+        return $project_class_list[$project_class_id]->name;
+    }
+
+    function fetch() 
+    {
+        if (self::$_project_class_cache !== null) {
+            return self::$_project_class_cache;
+        }
+        
+
+        $data = db::fetchList("
+select id, name, deleted
+from tr_project_class
+where deleted=false
+order by name");
+        
+        $out = array();
+        
+        foreach($data as $entry) {
+            $it = new ProjectClass();
+            $it->initFromArray($entry);
+            $out[$it->id] = $it;
+        }
+        //var_dump($out);
+        self::$_project_class_cache = $out;
+        
+        return $out;   
+    }
+    
+}
+
+
 class Project
 extends dbItem
 {
@@ -177,15 +247,16 @@ extends dbItem
     var $start_date;
     var $name;
     var $is_resource;
+    var $open;
 
     var $_project_class=null;
-    var $_open;
     
     static $_items = array();
 
     function __construct($arr, $is_item=true) 
     {
         $this->table = "tr_project";
+	$this->open = true;
         $this->initFromArray($arr);
         if($is_item)
             Project::$_items[$this->id] = $this;
@@ -212,7 +283,7 @@ extends dbItem
     function getProjectClassNames()
     {
         $res = array();
-        foreach(db::query("select id, name from tr_project_class") as $row){
+        foreach(db::query("select id, name from tr_project_class where deleted = false") as $row){
             $res[$row['id']] = $row['name'];
         }
         return $res;
@@ -229,6 +300,7 @@ extends dbItem
         foreach(db::fetchList("select project_class_id from tr_project_project_class where project_id=:id", array(":id"=>$this->id)) as $row) {
             $this->_project_class[]= $row['project_class_id'];
         }
+        return $this->_project_class;
     }
     
     function _load()
@@ -238,8 +310,9 @@ extends dbItem
         }
         foreach(db::fetchList("
 select p.id, p.name, p.egs_id, 
-    extract(epoch from p.start_date) as start_date, 
-    (select id from tr_project_user pu where pu.user_id=:user_id and pu.project_id = p.id) is not null as is_resource
+    extract(epoch from p.start_date) as start_date,
+    (select id from tr_project_user pu where pu.user_id=:user_id and pu.project_id = p.id) is not null as is_resource,
+    p.open as open
 from tr_project p
 where p.open=true 
 order by p.name",
@@ -254,28 +327,6 @@ order by p.name",
         }
     }
     
-    function getEgsMapping()
-    {
-        $mapping = array();
-        $temp = array();
-        foreach(db::fetchList("select * from tr_project") as $row) {
-            $p = new Project($row, false);
-            $p->_open = $row['open'];
-            
-            $mapping[$row['egs_id']] = $p;
-            $temp[$row['id']] = $p;
-        }
-
-        foreach(db::fetchList("
-select project_id, project_class_id 
-from tr_project_project_class") as $row) {
-            if(array_key_exists($row['project_id'],$temp)) {
-                $temp[$row['project_id']]->_project_class[]= $row['project_class_id'];
-            }
-        }
-        return $mapping;
-    }
-    
     function getName($id) 
     {
         Project::_load();
@@ -288,35 +339,16 @@ from tr_project_project_class") as $row) {
         return Project::$_items[$id];
     }
     
-    function add($name, $egs_id, $start_date, $project_class) 
-    {
-        db::query('insert into tr_project (name, egs_id, start_date) values (:name, :value, :d)',
-                  array(':name'=>$name, ':value'=>$egs_id,
-                        ':d'=>$start_date));
-        $id = db::lastInsertId('tr_project_id_seq');
-        
-        foreach($project_class as $cl) {
-            db::query('insert into tr_project_project_class (project_id, project_class_id) values (:pid, :cid)',
-                      array(':pid'=>$id, 
-                            ':cid'=>$cl));
-        }
-        
-
-    }
-  
-    function update($id, $name, $egs_id, $start_date, $project_class) 
+    function saveInternal($key='id') 
     {
         db::begin();
-        
-        $ok  = db::query('update tr_project set name=:name, egs_id=:value, start_date=:d where id=:id',
-                         array(':name'=>$name, 
-                               ':value'=>$egs_id,
-                               ':d'=>$start_date,
-                               ':id'=>$id));        
-        $ok &= db::query('delete from tr_project_project_class where project_id=:id', array(':id'=>$id));
-        foreach($project_class as $cl) {
+
+        $ok = parent::saveInternal($key);
+
+        $ok &= db::query('delete from tr_project_project_class where project_id=:id', array(':id'=>$this->id));
+        foreach($this->_project_class as $cl) {
             $ok &= db::query('insert into tr_project_project_class (project_id, project_class_id) values (:pid, :cid)',
-                      array(':pid'=>$id, 
+                      array(':pid'=>$this->id, 
                             ':cid'=>$cl));
         }
         if($ok) {
@@ -386,9 +418,7 @@ extends DbItem
         $out = array();
         //$project_external = Project::getProject($project_id)->external;
         
-        foreach($tag_list as $tag) {
-            $vis = $tag->visibility;
-            
+        foreach($tag_list as $tag) {           
             $show = false;
             
             if($tag->project_class_id === null) {

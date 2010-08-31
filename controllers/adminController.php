@@ -13,9 +13,76 @@ extends Controller
     {
 
         $title = "Administration";
-	
         util::setTitle($title);
-        $content = "<h2>Tags</h2>";
+	$content = '';
+
+        $content .= "<h2>Project classes</h2>";
+        $form = "";
+        $form .= "<table class='striped'>";
+        $form .= "<tr>";
+        $form .= "<th>Name</th>";
+        $form .= "<th></th>";
+        $form .= "</tr>";
+        $idx = 0;
+
+        $hidden = array('controller'=>'admin','task'=>'saveProjectClass');
+        
+        foreach(array_merge(ProjectClass::getProjectClasses(),array(new ProjectClass(array()))) as $project_class) {
+            $form .= "<tr>";
+            if($project_class->id !== null)
+                $hidden["project_class[$idx][id]"] = $project_class->id;
+            $form .= "<td>".form::makeText("project_class[$idx][name]",$project_class->name)."</td>";
+            $remove_name = htmlEncode("project_class[$idx][remove]");
+            $form .= "<td><button type='submit' name='$remove_name' value='1'>Remove</button></td>";
+            $form .= "</tr>";
+            $idx++;
+        }
+        $form .= "</table>";
+        $form .= "<div class='edit_buttons'>";
+        $form .= "<button type='submit' id='save'>Save</button>";
+        $form .= "</div>";
+        
+        $content .= form::makeForm($form, $hidden);
+
+
+
+        $content .= "<h2>Projects</h2>";
+        $form = "";
+        $form .= "<table class='striped'>";
+        $form .= "<tr>";
+        $form .= "<th>Name</th>";
+        $form .= "<th>Start date</th>";
+        $form .= "<th>Classes</th>";
+        $form .= "<th></th>";
+        $form .= "</tr>";
+        $idx = 0;
+
+        $hidden = array('controller'=>'admin','task'=>'saveProject');
+        
+        $class_values = array(null => 'None')+ Project::getProjectClassNames();
+
+        foreach(array_merge(Project::getProjects(),array(new Project(array()))) as $project) {            
+            $form .= "<tr>";
+            if($project->id !== null)
+                $hidden["project[$idx][id]"] = $project->id;
+            $form .= "<td>".form::makeText("project[$idx][name]",$project->name)."</td>";
+            $form .= "<td>".form::makeText("project[$idx][start_date]", date("r", $project->start_date))."</td>";
+            $form .= "<td>".form::makeSelect("project[$idx][_project_class]",$class_values, $project->getProjectClass())."</td>";
+            $remove_name = htmlEncode("project[$idx][remove]");
+            $form .= "<td><button type='submit' name='$remove_name' value='1'>Remove</button></td>";
+            $form .= "</tr>";
+            $idx++;
+        }
+        $form .= "</table>";
+        $form .= "<div class='edit_buttons'>";
+        $form .= "<button type='submit' id='save'>Save</button>";
+        $form .= "</div>";
+        
+        $content .= form::makeForm($form, $hidden);
+
+
+
+        $content .= "<h2>Tags</h2>";
 
         $form = "";
         
@@ -104,6 +171,44 @@ extends Controller
 
     }
 
+    function saveProjectClassRun()
+    {
+        foreach(param('project_class') as $project_class){
+            if (isset($project_class['remove'])) {
+                ProjectClass::delete($project_class['id']);
+            }
+            else {
+                if($project_class['name']) {
+                    $pc = new ProjectClass(array());
+                    //message("Input is " . sprint_r($project));
+                    $pc->initFromArray($project_class);
+                    //message("Project is " . sprint_r($pc));
+                    $pc->save();
+                }
+            }
+        }
+        util::redirect(makeUrl(array('controller'=>'admin','task'=>'view')));
+    }
+    
+    function saveProjectRun()
+    {
+        foreach(param('project') as $project){
+            if ($project['remove']==1) {
+                Project::delete($project['id']);
+            }
+            else {
+                if($project['name']) {
+                    $p = new Project(array());
+                    //message("Input is " . sprint_r($project));
+                    $p->initFromArray($project);
+                    //message("Project is " . sprint_r($p));
+                    $p->save();
+                }
+            }
+        }
+        util::redirect(makeUrl(array('controller'=>'admin','task'=>'view')));
+    }
+    
     function saveTagRun()
     {
         foreach(param('tag') as $tag){

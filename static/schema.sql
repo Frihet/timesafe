@@ -1,8 +1,8 @@
 drop table tr_project_project_class;
-drop table tr_project_class;
 drop table tr_tag_map;
-drop table tr_tag_group;
 drop table tr_tag;
+drop table tr_tag_group;
+drop table tr_project_class;
 drop table tr_entry;
 drop table tr_project_user;
 drop table tr_user;
@@ -14,7 +14,8 @@ create table tr_project
 	egs_id int,
 	start_date date,
 	name varchar(256) not null,
-	open boolean not null default true
+	open boolean not null default true,
+	is_resource boolean default false
 );
 
 create table tr_user
