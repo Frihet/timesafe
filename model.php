@@ -345,9 +345,9 @@ order by p.name",
 
         $ok = parent::saveInternal($key);
 
-        $ok &= db::query('delete from tr_project_project_class where project_id=:id', array(':id'=>$this->id));
+        $ok = $ok && db::query('delete from tr_project_project_class where project_id=:id', array(':id'=>$this->id));
         foreach($this->_project_class as $cl) {
-            $ok &= db::query('insert into tr_project_project_class (project_id, project_class_id) values (:pid, :cid)',
+            $ok = $ok && db::query('insert into tr_project_project_class (project_id, project_class_id) values (:pid, :cid)',
                       array(':pid'=>$this->id, 
                             ':cid'=>$cl));
         }
@@ -578,17 +578,37 @@ extends DbItem
     public $name;
     public $fullname;
     public $password;
+    var $_projects = null; 
 
     function __construct($id, $name, $fullname, $password) 
     {
+        $this->table = 'tr_user';
 	$this->id = $id;
 	$this->name = $name;
 	$this->fullname = $fullname;
 	$this->password = $password;
-        
         User::$_all[$this->name] = $this;
     }
     
+    function _load()
+    {
+	parent::_load();
+	$this->getProjects();
+    }
+  
+    function getPublicProperties() {
+        static $cache = null;
+        if (is_null( $cache )) {
+            $cache = array();
+            foreach (get_class_vars( get_class( $this ) ) as $key=>$val) {
+                if (substr( $key, 0, 1 ) != '_' && !in_array($key, array('me', 'user'))) {
+                    $cache[] = $key;
+                }
+            }
+        }
+        return $cache;
+    }
+
     function getAllUsers()
     {
 	
@@ -604,25 +624,50 @@ extends DbItem
 	return self::$_all;
     }
 
-    function save() 
+
+    function getProjectNames()
     {
-	//echo "Save {$this->id} {$this->name}<br>";
-	
-	if($this->id !== null) {
-	    db::query('update tr_user set name=:n, fullname=:f where id=:id',
-		      array(':id'=>$this->id,
-			    ':f'=>$this->fullname,
-			    ':n'=>$this->name));
-	    
-	} else {
-	    db::query('insert into tr_user (name, fullname) values(:n, :f)',
-		      array(':f'=>$this->fullname,
-			    ':n'=>$this->name));
-	    $this->id = db::lastInsertId('tr_user_id_seq');
-	    
-	}
+        $res = array();
+        foreach(db::query("select id, name from tr_project where open = true") as $row){
+            $res[$row['id']] = $row['name'];
+        }
+        return $res;
+        
     }
-    
+        
+    function getProjects()
+    {
+        if($this->_projects !== null){
+            return $this->_projects;
+        }
+        $this->_projects=array();
+
+        foreach(db::fetchList("select project_id from tr_project_user where user_id=:id", array(":id"=>$this->id)) as $row) {
+            $this->_projects[]= $row['project_id'];
+        }
+        return $this->_projects;
+    }    
+
+    function saveInternal($key='id') 
+    {
+        db::begin();
+
+        $ok = parent::saveInternal($key);
+
+        $ok = $ok && db::query('delete from tr_project_user where user_id=:id', array(':id'=>$this->id));
+        foreach($this->_projects as $p) {
+            $ok = $ok && db::query('insert into tr_project_user (project_id, user_id) values (:pid, :uid)',
+                      array(':pid'=>$p,
+                            ':uid'=>$this->id));
+        }
+        if($ok) {
+            db::commit();
+        }
+        else {
+            db::rollback();
+        }
+    }
+
     function delete()
     {
         db::query('update tr_user set deleted=true where id=:id',

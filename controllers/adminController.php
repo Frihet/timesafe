@@ -16,6 +16,44 @@ extends Controller
         util::setTitle($title);
 	$content = '';
 
+
+        $content .= "<h2>Users</h2>";
+        $form = "";
+        $form .= "<table class='striped'>";
+        $form .= "<tr>";
+        $form .= "<th>Name</th>";
+        $form .= "<th>Fullname</th>";
+        $form .= "<th>Password</th>";
+        $form .= "<th>Projects</th>";
+        $form .= "<th></th>";
+        $form .= "</tr>";
+        $idx = 0;
+
+        $hidden = array('controller'=>'admin','task'=>'saveUsers');
+	$project_values = array(null => 'None')+ User::getProjectNames();
+        
+        foreach(array_merge(User::getAllUsers(),array(new User(null, '', '', ''))) as $user) {
+            $form .= "<tr>";
+            if($user->id !== null)
+                $hidden["user[$idx][id]"] = $user->id;
+            $form .= "<td>".form::makeText("user[$idx][name]",$user->name)."</td>";
+            $form .= "<td>".form::makeText("user[$idx][fullname]",$user->fullname)."</td>";
+            $form .= "<td>".form::makeText("user[$idx][password]",'')."</td>";
+            $form .= "<td>".form::makeSelect("user[$idx][_projects]", $project_values, $user->getProjects()). "</td>";
+            $remove_name = htmlEncode("user[$idx][remove]");
+            $form .= "<td><button type='submit' name='$remove_name' value='1'>Remove</button></td>";
+            $form .= "</tr>";
+            $idx++;
+        }
+        $form .= "</table>";
+        $form .= "<div class='edit_buttons'>";
+        $form .= "<button type='submit' id='save'>Save</button>";
+        $form .= "</div>";
+        
+        $content .= form::makeForm($form, $hidden);
+
+
+
         $content .= "<h2>Project classes</h2>";
         $form = "";
         $form .= "<table class='striped'>";
@@ -171,6 +209,27 @@ extends Controller
 
     }
 
+    function saveUsersRun()
+    {
+        foreach(param('user') as $usr){
+            if (isset($usr['remove'])) {
+                $usr_obj = new User($usr['id'], '', '', '');
+		$usr_obj->delete();
+            }
+            else {
+                if($usr['name']) {
+		    if (!isset($usr['_projects'])) $usr['_projects'] = array();
+                    $pc = new User(null, '', '', '');
+                    //message("Input is " . sprint_r($project));
+                    $pc->initFromArray($usr);
+                    //message("Project is " . sprint_r($pc));
+                    $pc->save();
+                }
+            }
+        }
+        //util::redirect(makeUrl(array('controller'=>'admin','task'=>'view')));
+    }
+    
     function saveProjectClassRun()
     {
         foreach(param('project_class') as $project_class){
