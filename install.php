@@ -29,7 +29,7 @@ extends InstallApplication
     
     function getDsn()
     {
-        return array('default','egs');
+        return array('default');
     }
 }
 
