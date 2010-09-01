@@ -23,6 +23,11 @@ extends Controller
 
         $form = "";
         $form .= "<table class='striped'>";
+	$form .= "<tr>";
+        $form .= "<th colspan='2'></th>";
+        $form .= "<th colspan='" . count($class_values) . "'>Classes</th>";
+        $form .= "<th></th>";
+        $form .= "</tr>";
         $form .= "<tr>";
         $form .= "<th>Name</th>";
         $form .= "<th>Start date</th>";
