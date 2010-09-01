@@ -70,11 +70,27 @@ extends Application
 	    echo "<ul>\n";
 
 	    echo "<li>";
-	    echo makeLink(makeUrl(array("controller"=>null)), "Time registration", $is_tr?'selected':null);
+	    echo makeLink(makeUrl(array("controller"=>"editor")), "Time registration", $is_tr?'selected':null);
 	    echo "</li>\n";
 
 	    echo "<li>";
-	    echo makeLink(makeUrl(array("controller"=>"admin")), "Administration", $is_admin?'selected':null);
+	    echo makeLink(makeUrl(array("controller"=>"adminUser")), "Users", $is_admin?'selected':null);
+	    echo "</li>\n";
+
+	    echo "<li>";
+	    echo makeLink(makeUrl(array("controller"=>"adminProjectClass")), "Project classes", $is_admin?'selected':null);
+	    echo "</li>\n";
+
+	    echo "<li>";
+	    echo makeLink(makeUrl(array("controller"=>"adminProject")), "Projects", $is_admin?'selected':null);
+	    echo "</li>\n";
+
+	    echo "<li>";
+	    echo makeLink(makeUrl(array("controller"=>"adminTag")), "Tags", $is_admin?'selected':null);
+	    echo "</li>\n";
+
+	    echo "<li>";
+	    echo makeLink(makeUrl(array("controller"=>"adminTagGroup")), "Tag groups", $is_admin?'selected':null);
 	    echo "</li>\n";
 
 	    echo "<li>";

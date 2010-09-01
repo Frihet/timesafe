@@ -573,6 +573,7 @@ extends DbItem
     static $me;
     static $user;
     static $_all=null;
+    static $_all_by_id=null;
     
     public $id;
     public $name;
@@ -580,19 +581,17 @@ extends DbItem
     public $password;
     var $_projects = null; 
 
-    function __construct($id, $name, $fullname, $password) 
+    function __construct($param) 
     {
         $this->table = 'tr_user';
-	$this->id = $id;
-	$this->name = $name;
-	$this->fullname = $fullname;
-	$this->password = $password;
-        User::$_all[$this->name] = $this;
-    }
+	parent::__construct($param);
+     }
     
-    function _load()
+    function load($key_value)
     {
-	parent::_load();
+	parent::load($key_value);
+        User::$_all[$this->name] = $this;
+        User::$_all_by_id[$this->id] = $this;
 	$this->getProjects();
     }
   
@@ -617,9 +616,10 @@ extends DbItem
 	    return self::$_all;
 	}
 	self::$_all = array();
-	foreach(db::query('select * from tr_user where deleted=false order by fullname') as $row) 
+	self::$_all_by_id = array();
+	foreach(db::query('select id from tr_user where deleted=false order by fullname') as $row) 
 	{
-	    new User($row['id'], $row['name'], $row['fullname'], $row['password']);
+	    new User((int)$row['id']);
 	}
 	return self::$_all;
     }
@@ -660,6 +660,9 @@ extends DbItem
                       array(':pid'=>$p,
                             ':uid'=>$this->id));
         }
+        User::$_all[$this->name] = $this;
+        User::$_all_by_id[$this->id] = $this;
+
         if($ok) {
             db::commit();
         }
@@ -675,6 +678,10 @@ extends DbItem
 	if( self::$_all)
 	{
             unset(self::$_all[$this->name]);
+        }
+	if( self::$_all_by_id)
+	{
+            unset(self::$_all_by_id[$this->id]);
         }
         
     }
