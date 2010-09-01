@@ -18,7 +18,7 @@ extends Controller
         $form = "";
         $form .= "<table class='striped'>";
         $form .= "<tr><th>User name</th><td>".form::makeText("username","")."</td></tr>";
-        $form .= "<tr><th>Password</th><td>".form::makeText("password","")."</td></tr>";
+        $form .= "<tr><th>Password</th><td>".form::makePassword("password","")."</td></tr>";
         $form .= "</table>";
 	$form .= "<button type='submit'>Log in</button>";
 

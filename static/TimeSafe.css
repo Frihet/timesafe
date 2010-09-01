@@ -1,4 +1,3 @@
-
 input.time
 {
     width: 3em;
@@ -206,4 +205,40 @@ body .dnd_drop
  -o-transform: rotate(-90deg);
  filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=3);
  width: 1em;
+}
+
+ul.main_menu {
+ background: #ffffff;
+ margin-top: 0;
+ margin-left: 0;
+ margin-right: 0;
+ margin-bottom: 33px;
+ padding-top: 7px;
+ padding-left: 7px;
+ padding-right: 7px;
+ padding-bottom: 2px;
+ border-bottom: 1px solid #000000;
+}
+
+ul.main_menu li {
+ list-style-type: none;
+ display: inline;
+ margin-right: 4px;
+ padding: 2px;
+
+ background: #FFFFFF;
+ border: 1px solid #000000;
+}
+
+ul.main_menu li a {
+ color:#000000;
+ text-decoration:none;
+}
+
+.copyright {
+ position: absolute;
+ right: 0;
+ top: 0;
+ width: auto;
+ padding: 5px;
 }
