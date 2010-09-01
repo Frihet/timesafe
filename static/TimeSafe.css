@@ -88,6 +88,7 @@ th
     color: #fff;
     border-right: 1px solid white;
     text-align: left;
+    vertical-align: bottom;
 }
 
 th:last-child
@@ -193,4 +194,16 @@ body .dnd_drop
 .disabled
 {
     color: grey;
+}
+
+.membership_col {
+ height: 150px;
+}
+
+.membership_col div {
+ -webkit-transform: rotate(-90deg); 
+ -moz-transform: rotate(-90deg);
+ -o-transform: rotate(-90deg);
+ filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=3);
+ width: 1em;
 }

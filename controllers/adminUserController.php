@@ -29,7 +29,7 @@ extends Controller
         $form .= "<th>Fullname</th>";
         $form .= "<th>Password</th>";
 	foreach ($project_values as $project_id => $project_name) {
-	 $form .= "<th>{$project_name}</td>";
+	 $form .= "<th class='membership_col'><div>{$project_name}</div></td>";
 	}
         $form .= "<th></th>";
         $form .= "</tr>";

@@ -27,7 +27,7 @@ extends Controller
         $form .= "<th>Name</th>";
         $form .= "<th>Start date</th>";
 	foreach ($class_values as $class_id => $class_name) {
-	 $form .= "<th>{$class_name}</td>";
+	 $form .= "<th class='membership_col'><div>{$class_name}</div></td>";
 	}
         $form .= "<th></th>";
         $form .= "</tr>";
