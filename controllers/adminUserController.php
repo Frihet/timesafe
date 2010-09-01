@@ -18,20 +18,23 @@ extends Controller
 
 
         $content .= "<h2>Users</h2>";
+
+        $hidden = array('controller'=>'adminUser','task'=>'saveUsers');
+	$project_values = User::getProjectNames();
+        
         $form = "";
         $form .= "<table class='striped'>";
         $form .= "<tr>";
         $form .= "<th>Name</th>";
         $form .= "<th>Fullname</th>";
         $form .= "<th>Password</th>";
-        $form .= "<th>Projects</th>";
+	foreach ($project_values as $project_id => $project_name) {
+	 $form .= "<th>{$project_name}</td>";
+	}
         $form .= "<th></th>";
         $form .= "</tr>";
         $idx = 0;
 
-        $hidden = array('controller'=>'adminUser','task'=>'saveUsers');
-	$project_values = array(null => 'None')+ User::getProjectNames();
-        
         foreach(array_merge(User::getAllUsers(),array(new User(null, '', '', ''))) as $usr) {
             $form .= "<tr>";
             if($usr->id !== null)
@@ -39,7 +42,10 @@ extends Controller
             $form .= "<td>".form::makeText("usr[$idx][name]",$usr->name)."</td>";
             $form .= "<td>".form::makeText("usr[$idx][fullname]",$usr->fullname)."</td>";
             $form .= "<td>".form::makeText("usr[$idx][password]",'')."</td>";
-            $form .= "<td>".form::makeSelect("usr[$idx][_projects]", $project_values, $usr->getProjects()). "</td>";
+
+	    foreach ($project_values as $project_id => $project_name) {
+	     $form .= "<td>" . form::makeListCheckbox("usr[$idx][_projects]", $project_id, in_array($project_id, $usr->getProjects()), "", null) . "</td>";
+	    }
             $remove_name = htmlEncode("usr[$idx][remove]");
             $form .= "<td><button type='submit' name='$remove_name' value='1'>Remove</button></td>";
             $form .= "</tr>";

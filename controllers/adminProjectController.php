@@ -17,19 +17,22 @@ extends Controller
 	$content = '';
 
         $content .= "<h2>Projects</h2>";
+
+        $hidden = array('controller'=>'adminProject','task'=>'saveProject');        
+        $class_values = Project::getProjectClassNames();
+
         $form = "";
         $form .= "<table class='striped'>";
         $form .= "<tr>";
         $form .= "<th>Name</th>";
         $form .= "<th>Start date</th>";
-        $form .= "<th>Classes</th>";
+	foreach ($class_values as $class_id => $class_name) {
+	 $form .= "<th>{$class_name}</td>";
+	}
         $form .= "<th></th>";
         $form .= "</tr>";
         $idx = 0;
 
-        $hidden = array('controller'=>'adminProject','task'=>'saveProject');
-        
-        $class_values = array(null => 'None')+ Project::getProjectClassNames();
 
         foreach(array_merge(Project::getProjects(),array(new Project(array()))) as $project) {            
             $form .= "<tr>";
@@ -37,7 +40,10 @@ extends Controller
                 $hidden["project[$idx][id]"] = $project->id;
             $form .= "<td>".form::makeText("project[$idx][name]",$project->name)."</td>";
             $form .= "<td>".form::makeText("project[$idx][start_date]", date("r", $project->start_date))."</td>";
-            $form .= "<td>".form::makeSelect("project[$idx][_project_class]",$class_values, $project->getProjectClass())."</td>";
+
+	    foreach ($class_values as $class_id => $class_name) {
+	     $form .= "<td>" . form::makeListCheckbox("project[$idx][_project_class]", $class_id, in_array($class_id, $project->getProjectClass()), "", null) . "</td>";
+	    }
             $remove_name = htmlEncode("project[$idx][remove]");
             $form .= "<td><button type='submit' name='$remove_name' value='1'>Remove</button></td>";
             $form .= "</tr>";
