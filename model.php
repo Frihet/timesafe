@@ -385,6 +385,7 @@ extends DbItem
 
     var $id;
     var $name;
+    var $color;
     var $project_class_id;
     var $project_id;
     var $group_id;

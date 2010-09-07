@@ -64,13 +64,14 @@ create table tr_tag
 (
 	id serial not null primary key,
 	name varchar(256) not null,
+	color varchar(256),
 	visibility integer,
 	project_class_id int references tr_project_class(id),
 	project_id int references tr_project(id),
 	group_id int references tr_tag_group(id),
 	recommended boolean not null default false,
 	deleted boolean not null default false
-);	
+);
 
 
 create table tr_tag_map
@@ -89,9 +90,9 @@ create table tr_project_project_class
 
 insert into tr_user(name, password, fullname) values ('admin',md5('admin'),'Admin Adminsson');
 
-insert into tr_tag(name, visibility) values ('Billable',0);
-insert into tr_tag(name, visibility) values ('40 % overtime',0);
-insert into tr_tag(name, visibility) values ('100 % overtime',0);
+insert into tr_tag(name, color, visibility) values ('Billable','#00ff00',0);
+insert into tr_tag(name, color, visibility) values ('40 % overtime','#555555',0);
+insert into tr_tag(name, color, visibility) values ('100 % overtime','#999999',0);
 insert into tr_tag(name, visibility) values ('Travel',0);
 
 insert into tr_project_class (name) values ('Internal');
