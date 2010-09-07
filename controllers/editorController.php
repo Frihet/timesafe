@@ -209,7 +209,7 @@ where e.id=:id', array(':id'=>$e));
         $to=date('Y-m-d',Entry::getBaseDate()+3600*24);
         
         $content .= form::makeForm($form,array('controller'=>'editor', 'task'=>'save','user'=>$username));
-	$content .= "<div class='figure'><img src='/time_report/?type=histogram&from=$from&to=$to&users[]=$username' /><em class='caption'>Figure 1: Work performed. Warning! This is the number of hours stored on the server when this page was generated. The graph does not reflect any unsaved edits.</em></div>";
+	$content .= "<div class='figure'><img src='time_report/?type=histogram&from=$from&to=$to&users[]=$username' /><em class='caption'>Figure 1: Work performed. Warning! This is the number of hours stored on the server when this page was generated. The graph does not reflect any unsaved edits.</em></div>";
         
 
 	//$content .= $this->entryListRun();

@@ -1,0 +1,13 @@
+/*
+  * CSS stylesheet for invoce/(salary/illness printing
+  * 	
+  * This stylesheet uses the same fonts and sizes as the FreeCode
+  * templates for regular documentes, so when printed, they should apear
+  * identical to documents written in e.g. ooo.
+  */
+
+form#report_form
+{
+  display: None;
+}
+

@@ -1,0 +1,146 @@
+/*
+ * CSS stylesheet for invoce/(salary/illness printing
+ * 	
+ * This stylesheet uses the same fonts and sizes as the FreeCode
+ * templates for regular documentes, so when printed, they should apear
+ * identical to documents written in e.g. ooo.
+ */
+
+body
+{
+  font-size: small;
+}
+
+div#pagetitle
+{
+  display: None;
+}
+
+table.fctable 
+{
+  border: 1px solid #aaa;
+}
+
+table.fctable th 
+{
+  background: #eee;
+}
+
+.line_even 
+{
+  background: #eee;	
+}
+
+.line_odd 
+{
+  background: #fff;
+}
+
+.verify 
+{
+  width: 100%;	
+  border: 1px solid #aaa;
+  margin-bottom: 3px;	
+}
+
+.form 
+{
+  margin: 0px auto;
+}
+
+.form-header 
+{
+  text-align: center;
+  background: #10245c; 
+  color: #ffffff;
+  font-size: large;
+  font-weight: bold;
+}
+
+div.menu-nsel 
+{
+  background-color: #ccc;
+}
+
+div.menu-nsel:hover 
+{
+  background: #eee;
+}
+
+div.menu-nsel a
+{
+  color: #01245C;
+  font-weight: normal;
+}
+
+/* Styling of forms */
+input, 
+button, 
+select,
+textarea 
+{ 
+  padding: 2px;
+  border: 1px solid #aaa;
+  background: #eee;
+  color: #000;
+}
+
+input:focus, 
+textarea:focus,
+select:focus
+{ 
+  background: #fff; 
+}
+
+
+
+div.menu 
+{
+  height: 16px;
+  width: 80px;
+  font-size: 10px;
+  font-weight: normal;	
+  padding: 2px 2px 0px 2px;
+  border: 1px solid #666;
+}
+
+div.menu a 
+{
+  text-decoration: none;
+}
+
+div.menu-sel {
+  background-color: #fff;
+}
+
+div.menu-sel a{
+  color: #01245C;
+  font-weight: normal;
+}
+
+table.fctable .border_left
+{
+  border-left: 1px #aaa solid;
+}
+
+div.render_time
+{
+  float: right;
+  clear: both;
+  margin: 1em;
+}
+
+.error_head
+{
+  color: #7f0000;
+}
+
+.error
+{
+  color: #af0000;
+}
+
+.log_item
+{
+  color: green;
+}

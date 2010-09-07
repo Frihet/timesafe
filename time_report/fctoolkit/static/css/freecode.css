@@ -1,0 +1,92 @@
+body {
+    background: #eeeeee;
+    margin: 0px;
+    font-size: medium;
+}
+
+#header {
+    /* This area holds an image which should be right justified, the image
+       base color is #01245c. */
+    background: #01245c;
+    text-align: right;
+
+    width: 100%;
+    height: 58px;
+    padding: 0px;
+    margin: 0px;
+}
+
+#pagetitle {
+    background: #ffffff;
+    margin: 10px;
+}
+
+#page {
+    background: #ffffff;
+    padding: 5px;
+    margin: 10px;
+}
+
+#footer {
+    background: #ffffff;
+    text-align: center;
+}
+
+.break {
+  clear: both;
+}
+
+.left {
+    text-align: left;
+}
+
+.right {
+    text-align: right;
+}
+
+.center {
+    text-align: center;
+    margin: 0px auto;
+}
+
+.example {
+    color: #666666;
+}
+
+.grey {
+    color: #666666;
+    font-size: small;
+}
+
+table.fctable 
+{
+  font-family: "Bitstream Charter";
+  border-collapse: collapse;
+  margin: 1em;
+}
+
+table.fctable th {
+  padding: 5px;
+}
+
+table.fctable td {
+  padding: 5px;
+}
+
+.number {
+    text-align: right;
+}
+
+.text {
+    text-align: left;
+}
+
+em.caption
+{
+  margin: 5px;
+}
+
+caption
+{
+  font-style: italic;
+}

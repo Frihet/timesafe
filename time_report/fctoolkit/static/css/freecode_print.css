@@ -1,0 +1,153 @@
+/*
+  * CSS stylesheet for invoce/(salary/illness printing
+  * 	
+  * This stylesheet uses the same fonts and sizes as the FreeCode
+  * templates for regular documentes, so when printed, they should apear
+  * identical to documents written in e.g. ooo.
+  */
+
+form#report_form,
+div#footer,
+div.version
+{
+  display: None;
+}
+
+div#page
+{
+  margin: 0em;
+  padding: 0em;
+}
+
+p 
+{
+  margin-top: 0.15cm; 
+  margin-bottom: 0.75cm; 
+}
+
+h1
+{
+  font-family: "Bitstream Vera Sans";
+  font-size: 20pt;
+  font-weight: bold;
+  page-break-before: always;
+
+}
+
+h2
+{
+  font-family: "Bitstream Vera Sans";
+  font-size: 16pt;
+  font-weight: bold;
+  margin-top: 1.0cm; 
+}
+
+h3
+{
+  font-family: "Bitstream Vera Sans";
+  font-size: 14pt;
+  font-weight: bold;
+}
+
+.small_print p
+{
+  margin-bottom: 0.25cm; 
+}
+
+.page_break
+{
+  page-break-before: always;
+}
+
+body
+{
+  font-family: "Bitstream Charter";
+  font-size: 12pt;
+}
+
+.small_print
+{
+  font-size: 9pt;
+}
+
+table.fctable 
+{
+  border-collapse: collapse;
+  border-spacing: 0px;
+}
+
+table.fctable th
+{
+  font-family: "Bitstream Charter";
+  font-weight: bold;
+  font-style: italic;
+  vertical-align: bottom;    
+  text-align: left;
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+table.fctable th.top_head
+{
+  border-bottom: 1px #000000 solid;
+}
+
+table.fctable th.super_head
+{
+  text-align: center;  
+}
+
+table.fctable th.bottom_sum
+{
+  border-bottom: 2px #000000 solid;
+  border-top: 1px #000000 solid;
+  font-weight:bold;
+}
+
+table.fctable th.number
+{
+  font-style: normal;
+  text-align: right;
+}
+
+table.fctable th.right_sum
+{
+  font-weight:bold;
+}
+
+table.fctable td 
+{
+  padding-right: 6px;
+  padding-left: 6px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  vertical-align: top;
+}
+
+table.detail_list
+{
+  font-size: 10pt;
+}
+
+a
+{
+  text-decoration: none;
+  color: black;
+}
+
+table.fctable th.left_head
+{
+  border-right: 1px #000000 solid;
+  font-style: italic;
+}
+
+div.figure
+{
+  margin: 2em;
+}
+
+table.fctable .border_left
+{
+  border-left: 1px #000000 solid;
+}
+
