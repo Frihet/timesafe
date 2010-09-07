@@ -464,28 +464,28 @@ class Display
         Remove leading empty lines
       */
       $pat = "^( |\n)*";
-      $d = ereg_replace( $pat, "", $d );
+      $d = preg_replace( $pat, "", $d );
       
       /*
         Format * - based lists nicely
       */
       $pat = "^".' *\* *';
-      $d = ereg_replace( $pat, "&nbsp;-&nbsp;", $d );
+      $d = preg_replace( $pat, "&nbsp;-&nbsp;", $d );
       $pat = "\n".' *\* *';
-      $d = ereg_replace( $pat, "<br>&nbsp;-&nbsp;", $d );
+      $d = preg_replace( $pat, "<br>&nbsp;-&nbsp;", $d );
 
       /*
         Preserve newlines
       */
       $pat = "\n";
-      $d = ereg_replace( $pat, "<br>", $d );
+      $d = preg_replace( $pat, "<br>", $d );
 
       /*
         Turn multiple newlines into a paragraph break
       */
 
       $pat = "<br>(\r| |\n)*<br>";
-      $d = ereg_replace( $pat, "</p><p>", $d );
+      $d = preg_replace( $pat, "</p><p>", $d );
       return "$d";
     }
   
