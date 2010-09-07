@@ -408,8 +408,7 @@ join tr_user u
               $idx++;
           }
           
-          // $where[] = "e.project_id in (" . implode(", ", $u) . ")";
-          $where[] = "p.egs_id in (" . implode(", ", $u) . ")";
+          $where[] = "p.id in (" . implode(", ", $u) . ")";
       }
 
     // Date
