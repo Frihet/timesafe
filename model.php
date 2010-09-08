@@ -166,6 +166,123 @@ order by perform_date", array(':user_id'=>User::$user->id,
         return $out;
         
     }
+
+    function sqlColoredTags() {
+        return array(
+         "select
+	   et.entry_id,
+	   t.*
+	  from
+	   tr_tag_map et
+	   join tr_tag t on
+	    et.tag_id = t.id
+	    and t.color_r is not null
+	    and t.color_g is not null
+	    and t.color_b is not null",
+	 array());
+    }
+
+    function sqlColoredEntries() {
+        $sql = self::sqlColoredTags();
+
+        $date_end = date('Y-m-d',self::getBaseDate());
+        $date_begin = date('Y-m-d',self::getBaseDate()-(self::getDateCount()-1)*3600*24);
+
+        return array(
+         "select
+	   e.id,
+	   extract(epoch from e.perform_date) as perform_date,
+	   e.minutes,
+	   avg(t.color_r) :: integer as color_r, avg(t.color_g) :: integer as color_g, avg(t.color_b) :: integer as color_b,
+	   array_agg(t.name) as tag_names
+	  from
+	   tr_entry e
+	   left outer join ({$sql[0]}) t on
+	    e.id = t.entry_id
+	  where
+	   e.user_id = :user_id 
+	   and perform_date <= :date_end 
+	   and perform_date >= :date_begin 
+	  group by
+	   e.perform_date,e.id,e.minutes",
+	 array_merge($sql[1],
+	  array(':user_id'=>User::$user->id,
+	        ':date_end'=>$date_end,
+	        ':date_begin'=>$date_begin)));
+    }
+
+    function sqlColors() {
+        $sql = self::sqlColoredEntries();
+
+        return array(
+         "select
+           color_r,
+	   color_g,
+	   color_b,
+	   tag_names
+	  from
+	   ({$sql[0]}) as s
+          group by
+           color_r,
+	   color_g,
+	   color_b,
+	   tag_names
+	  order by
+	   tag_names;",
+	 $sql[1]);
+    }
+
+    function sqlGroupByColor() {
+        $sql = self::sqlColoredEntries();
+
+        return array(
+         "select
+	   perform_date,
+	   sum(minutes) as minutes,
+           color_r,
+	   color_g,
+	   color_b,
+	   tag_names
+	  from
+	   ({$sql[0]}) as s
+          group by
+	   perform_date,
+           color_r,
+	   color_g,
+	   color_b,
+	   tag_names
+	  order by
+	   perform_date;",
+	 $sql[1]);
+    }
+
+    function colors() {
+        $sql = self::sqlColors();
+        return db::fetchList($sql[0], $sql[1]);
+    }
+
+    function groupByColor() {
+    	$sql = self::sqlGroupByColor();
+        $hours = db::fetchList($sql[0], $sql[1]);
+
+	$hours_by_date = array();
+        $last_date = null;
+	$last_hours = null;
+	foreach ($hours as $hour) {
+            if ($last_date != $hour['perform_date']) {
+	        if ($last_date != null)
+		    $hours_by_date[$last_date] = $last_hours;
+		$last_date = $hour['perform_date'];
+	        $last_hours = array();
+            }
+	    $last_hours[] = $hour;
+        }
+	if ($last_date != null)
+	    $hours_by_date[$last_date] = $last_hours;
+
+	return $hours_by_date;
+    }
+    
 }
 
 
@@ -385,11 +502,14 @@ extends DbItem
 
     var $id;
     var $name;
-    var $color;
     var $project_class_id;
     var $project_id;
     var $group_id;
     var $recommended;
+    var $color;
+    var $color_r;
+    var $color_g;
+    var $color_b;
     
     static $_tag_cache;
 
@@ -403,6 +523,26 @@ extends DbItem
             else if (is_array($param)) {
                 $this->initFromArray($param);
             }
+        }
+    }
+
+    function getPublicProperties() {
+        static $cache = null;
+        if (is_null( $cache )) {
+            $cache = array();
+            foreach (get_class_vars( get_class( $this ) ) as $key=>$val) {
+                if (substr( $key, 0, 1 ) != '_' && $key != "color") {
+                    $cache[] = $key;
+                }
+            }
+        }
+        return $cache;
+    }
+
+    function initFromArray($arr) {
+    	parent::initFromArray($arr);
+	if ($this->color_r !== null && $this->color_g !== null && $this->color_b !== null) {
+	   $this->color = '#' . str_pad(dechex($this->color_r), 2, "0", STR_PAD_LEFT) . str_pad(dechex($this->color_g), 2, "0", STR_PAD_LEFT) . str_pad(dechex($this->color_b), 2, "0", STR_PAD_LEFT);
         }
     }
 
@@ -455,7 +595,6 @@ extends DbItem
             return self::$_tag_cache;
         }
         
-
         $data = db::fetchList("
 select * 
 from tr_tag
@@ -478,10 +617,16 @@ order by name");
 
     function save()
     {
+        $this->color_r = null;
+        $this->color_g = null;
+        $this->color_b = null;
+	if (preg_match('/^#[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]$/', $this->color) > 0) {
+            $this->color_r = hexdec(substr($this->color, 1, 2));
+            $this->color_g = hexdec(substr($this->color, 3, 2));
+            $this->color_b = hexdec(substr($this->color, 5, 2));
+	}
         return $this->saveInternal();
     }
-     
-    
 }
 
 class TagGroup
