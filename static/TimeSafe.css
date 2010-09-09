@@ -242,3 +242,11 @@ ul.main_menu li a {
  width: auto;
  padding: 5px;
 }
+
+.report_timetable {
+ width: 100%;
+}
+
+.report_timetable * {
+ white-space: nowrap;
+}

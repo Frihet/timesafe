@@ -214,12 +214,20 @@ order by perform_date", array(':user_id'=>User::$user->id,
         return array(
          "select
 	   e.id,
+	   u.id as user_id,
+	   u.name as user,
+	   u.fullname as user_fullname,
+	   p.id as project_id,
+	   p.name as project,
+	   e.description,
 	   extract(epoch from e.perform_date) as perform_date,
 	   e.minutes,
 	   avg(t.color_r) :: integer as color_r, avg(t.color_g) :: integer as color_g, avg(t.color_b) :: integer as color_b,
 	   array_agg(t.name) as tag_names
 	  from
 	   tr_entry e
+	   join tr_user u on
+            e.user_id = u.id
 	   join tr_project p on
             e.project_id = p.id
 	   left outer join ({$sql[0]}) t on
@@ -231,7 +239,7 @@ order by perform_date", array(':user_id'=>User::$user->id,
            and {$project_sql[0]}
 	   and {$tag_sql[0]}
 	  group by
-	   e.perform_date,e.id,e.minutes",
+	   e.id, u.id, u.name, u.fullname, p.id, p.name, e.description, e.perform_date, e.minutes",
 	 array_merge($sql[1], $user_sql[1], $project_sql[1], $tag_sql[1],
 	  array(':date_end'=>$filter['date_end'],
 	        ':date_begin'=>$filter['date_begin'])));
@@ -287,26 +295,32 @@ order by perform_date", array(':user_id'=>User::$user->id,
         return db::fetchList($sql[0], $sql[1]);
     }
 
+    function coloredEntries($filter) {
+        $sql = self::sqlColoredEntries($filter);
+        return self::groupByColumn(db::fetchList($sql[0], $sql[1]), "perform_date");
+    }
+
+    function groupByColumn($items, $col) {
+	$items_by_col = array();
+        $last_col_value = null;
+	$last_items = null;
+	foreach ($items as $item) {
+            if ($last_col_value != $item[$col]) {
+	        if ($last_col_value != null)
+		    $items_by_col[$last_col_value] = $last_items;
+		$last_col_value = $item[$col];
+	        $last_items = array();
+            }
+	    $last_items[] = $item;
+        }
+	if ($last_col_value != null)
+	    $items_by_col[$last_col_value] = $last_items;
+	return $items_by_col;
+    }
+
     function groupByColor($filter) {
     	$sql = self::sqlGroupByColor($filter);
-        $hours = db::fetchList($sql[0], $sql[1]);
-
-	$hours_by_date = array();
-        $last_date = null;
-	$last_hours = null;
-	foreach ($hours as $hour) {
-            if ($last_date != $hour['perform_date']) {
-	        if ($last_date != null)
-		    $hours_by_date[$last_date] = $last_hours;
-		$last_date = $hour['perform_date'];
-	        $last_hours = array();
-            }
-	    $last_hours[] = $hour;
-        }
-	if ($last_date != null)
-	    $hours_by_date[$last_date] = $last_hours;
-
-	return $hours_by_date;
+        return self::groupByColumn(db::fetchList($sql[0], $sql[1]), "perform_date");
     }
     
 }

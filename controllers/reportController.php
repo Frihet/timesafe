@@ -69,7 +69,37 @@ extends Controller
 	
 	$content .= "<div class='figure'><img src='" . makeUrl(array_merge($_GET, array('controller'=>'graph', 'width' => '1024', 'height' => '480'))) . "' /></div>";
         
+
+
+
+        $date_end = date('Y-m-d',Entry::getBaseDate());
+        $date_begin = date('Y-m-d',Entry::getBaseDate()-(Entry::getDateCount()-1)*3600*24);
+
+	$all = User::getAllUsers();
+	$user_ids = array();
+	foreach (param('users',array()) as $usr) {
+	    $user_ids[] = $all[$usr]->id;
+	}
+	
+	$filter = array(
+	 'date_begin' => $date_begin,
+ 	 'date_end' => $date_end,
+	 'projects' => isset($_GET['projects']) ? $_GET['projects'] : array(),
+	 'tags' => isset($_GET['tags']) ? $_GET['tags'] : array(),
+	 'users' => $user_ids
+	);
+	$hours_by_date = Entry::coloredEntries($filter);
         
+	$content .= "<table class='report_timetable'><tr><th>Date</th><th>User</th><th>Project</th><th>Tags</th><th>Description</th></tr>";
+	foreach ($hours_by_date as $date => $hours) {
+	    $date = date('Y-m-d', $date);
+	    foreach ($hours as $hour) {
+	        $content .= "<tr><th>{$date}</th><td>{$hour['user_fullname']}</td><td>{$hour['project']}</td><td>{$hour['tag_names']}</td><td>{$hour['description']}</td></tr>";
+		$date = '';
+	    }
+        }
+        $content .= "</table>";
+
         $this->show(null, $content);
 
     }
