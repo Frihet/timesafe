@@ -239,7 +239,9 @@ order by perform_date", array(':user_id'=>User::$user->id,
            and {$project_sql[0]}
 	   and {$tag_sql[0]}
 	  group by
-	   e.id, u.id, u.name, u.fullname, p.id, p.name, e.description, e.perform_date, e.minutes",
+	   e.id, u.id, u.name, u.fullname, p.id, p.name, e.description, e.perform_date, e.minutes
+	  order by
+	   e.perform_date",
 	 array_merge($sql[1], $user_sql[1], $project_sql[1], $tag_sql[1],
 	  array(':date_end'=>$filter['date_end'],
 	        ':date_begin'=>$filter['date_begin'])));
