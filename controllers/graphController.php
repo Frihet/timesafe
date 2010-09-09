@@ -34,7 +34,7 @@ extends Controller
 	foreach ($colors as $color) {
 	    $idx_to_color[$idx] = array($color['color_r'], $color['color_g'], $color['color_b']);
 	    $idx_to_tag_names[$idx] = $color['tag_names'];
-	    $color_to_idx[$color['color_r'] * 256 * 256 + $color['color_g'] * 256 + $color['color_b']] = $idx;
+	    $color_to_idx[util::colorToHex($color['color_r'], $color['color_g'], $color['color_b'])] = $idx;
 	    $idx++;
 	}
 
@@ -46,7 +46,7 @@ extends Controller
 	foreach ($hours_by_date as $date => $hours) {
 	    $hour_lengths = array_fill(0, count($idx_to_color), false);
 	    foreach ($hours as $hour) {
-	        $idx = $color_to_idx[$hour['color_r'] * 256 * 256 + $hour['color_g'] * 256 + $hour['color_b']];
+	        $idx = $color_to_idx[util::colorToHex($hour['color_r'], $hour['color_g'], $hour['color_b'])];
 	        $hour_lengths[$idx] = $hour['minutes'] / 60.0;
 	    }
 	    $h->addHistogramPoint($date, $hour_lengths);

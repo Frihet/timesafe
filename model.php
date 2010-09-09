@@ -182,31 +182,12 @@ order by perform_date", array(':user_id'=>User::$user->id,
 	 array());
     }
 
-    function arrayToSqlIn($col, $arr) {
-        $sql = 'true';
-	$params = array();
-	if ($arr != null && count($arr)) {
-	    $varnames = array();
-	    $arr[] = $arr[0];
-	    $idx = 0;
-	    foreach ($arr as $item) {
-	        $varname = str_replace(".", "_", ":__{$col}_{$idx}");
-	    	$varnames[] = $varname;
-		$params[$varname] = $item;
-		$idx++;
-	    }
-	    $items = implode(', ', $varnames);
-	    $sql = "{$col} in ({$items})";
-	}
-	return array($sql, $params);
-    }
-
     function sqlColoredEntries($filter) {
         $sql = self::sqlColoredTags();
-	$user_sql = self::arrayToSqlIn("e.user_id", isset($filter['users']) ? $filter['users'] : array());
-	$project_sql = self::arrayToSqlIn("p.name", isset($filter['projects']) ? $filter['projects'] : array());
+	$user_sql = util::arrayToSqlIn("e.user_id", isset($filter['users']) ? $filter['users'] : array());
+	$project_sql = util::arrayToSqlIn("p.name", isset($filter['projects']) ? $filter['projects'] : array());
 
-	$tag_sql = self::arrayToSqlIn("t.name", isset($filter['tags']) ? $filter['tags'] : array());
+	$tag_sql = util::arrayToSqlIn("t.name", isset($filter['tags']) ? $filter['tags'] : array());
 	if ($tag_sql[0] != "true") {
 	    $tag_sql[0] = "e.id in (select et.entry_id from tr_tag_map et join tr_tag t on et.tag_id = t.id where {$tag_sql[0]})";
 	}
@@ -583,7 +564,7 @@ extends DbItem
     function initFromArray($arr) {
     	parent::initFromArray($arr);
 	if ($this->color_r !== null && $this->color_g !== null && $this->color_b !== null) {
-	   $this->color = '#' . str_pad(dechex($this->color_r), 2, "0", STR_PAD_LEFT) . str_pad(dechex($this->color_g), 2, "0", STR_PAD_LEFT) . str_pad(dechex($this->color_b), 2, "0", STR_PAD_LEFT);
+	   $this->color = util::colorToHex($this->color_r, $this->color_g, $this->color_b);
         }
     }
 
