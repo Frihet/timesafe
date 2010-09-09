@@ -103,7 +103,7 @@ extends Controller
 	    $idx++;
 	}
         
-	$content .= "<table class='report_timetable'><tr><th>Date</th><th></th><th>User</th><th>Project</th><th>Minutes</th><th>Tags</th><th>Description</th></tr>";
+	$content .= "<table class='report_timetable'><tr><th>Date</th><th></th><th>Minutes</th><th>User</th><th>Project</th><th>Tags</th><th>Description</th></tr>";
 	$sums = array();
 	foreach ($hours_by_date as $date => $hours) {
 	    $date = date('Y-m-d', $date);
@@ -111,16 +111,18 @@ extends Controller
 	        $color = util::colorToHex($hour['color_r'], $hour['color_g'], $hour['color_b']);
 		if (!isset($sums[$color])) $sums[$color] = 0;
 		$sums[$color] += $hour['minutes'];
-	        $content .= "<tr><th>{$date}</th><td style='background: {$color}'>&nbsp;</td><td>{$hour['user_fullname']}</td><td>{$hour['project']}</td><td>{$hour['minutes']}</td><td>{$hour['tag_names']}</td><td>{$hour['description']}</td></tr>";
+	        $content .= "<tr><th>{$date}</th><td style='background: {$color}'>&nbsp;</td><td>{$hour['minutes']}</td><td>{$hour['user_fullname']}</td><td>{$hour['project']}</td><td>{$hour['tag_names']}</td><td>{$hour['description']}</td></tr>";
 		$date = '';
 	    }
         }
 	$content .= "<tr><th colspan='7'>Sum</th></tr>";
+	$total_sum = 0;
 	foreach ($sums as $color => $sum) {
+	    $total_sum += $sum;
 	    $tags = $idx_to_tag_names[$color_to_idx[$color]];
-	    $content .= "<tr><th>{$tags}</th><td style='background: {$color}'>&nbsp;</td><td></td><td></td><td>{$sum}</td><td></td><td></td></tr>";
-	    $title = "";
+	    $content .= "<tr><th>{$tags}</th><td style='background: {$color}'>&nbsp;</td><td>{$sum}</td><td></td><td></td><td></td><td></td></tr>";
 	}
+        $content .= "<tr><th>Total</th><td></td><td>{$total_sum}</td><td></td><td></td><td></td><td></td></tr>";
 
         $content .= "</table>";
 
