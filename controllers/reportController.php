@@ -90,11 +90,11 @@ extends Controller
 	);
 	$hours_by_date = Entry::coloredEntries($filter);
         
-	$content .= "<table class='report_timetable'><tr><th>Date</th><th>User</th><th>Project</th><th>Tags</th><th>Description</th></tr>";
+	$content .= "<table class='report_timetable'><tr><th>Date</th><th>User</th><th>Project</th><th>Minutes</th><th>Tags</th><th>Description</th></tr>";
 	foreach ($hours_by_date as $date => $hours) {
 	    $date = date('Y-m-d', $date);
 	    foreach ($hours as $hour) {
-	        $content .= "<tr><th>{$date}</th><td>{$hour['user_fullname']}</td><td>{$hour['project']}</td><td>{$hour['tag_names']}</td><td>{$hour['description']}</td></tr>";
+	        $content .= "<tr><th>{$date}</th><td>{$hour['user_fullname']}</td><td>{$hour['project']}</td><td>{$hour['minutes']}</td><td>{$hour['tag_names']}</td><td>{$hour['description']}</td></tr>";
 		$date = '';
 	    }
         }
