@@ -182,11 +182,23 @@ order by perform_date", array(':user_id'=>User::$user->id,
 	 array());
     }
 
-    function sqlColoredEntries() {
+    function sqlColoredEntries($date_begin, $date_end, $users) {
         $sql = self::sqlColoredTags();
 
-        $date_end = date('Y-m-d',self::getBaseDate());
-        $date_begin = date('Y-m-d',self::getBaseDate()-(self::getDateCount()-1)*3600*24);
+        $users_sql = '';
+	$users_params = array();
+	if (count($users)) {
+	    $users_varnames = array();
+	    $users[] = $users[0];
+	    $idx = 0;
+	    foreach ($users as $user) {
+	        $users_varname = ':user_id' . $idx;
+	    	$users_varnames[] = $users_varname;
+		$users_params[$users_varname] = $user;
+		$idx++;
+	    }
+	    $users_sql = "and e.user_id in (" . implode(', ', $users_varnames) . ")";
+	}
 
         return array(
          "select
@@ -200,19 +212,18 @@ order by perform_date", array(':user_id'=>User::$user->id,
 	   left outer join ({$sql[0]}) t on
 	    e.id = t.entry_id
 	  where
-	   e.user_id = :user_id 
-	   and perform_date <= :date_end 
+	   perform_date <= :date_end 
 	   and perform_date >= :date_begin 
+           {$users_sql}
 	  group by
 	   e.perform_date,e.id,e.minutes",
-	 array_merge($sql[1],
-	  array(':user_id'=>User::$user->id,
-	        ':date_end'=>$date_end,
+	 array_merge($sql[1], $users_params,
+	  array(':date_end'=>$date_end,
 	        ':date_begin'=>$date_begin)));
     }
 
-    function sqlColors() {
-        $sql = self::sqlColoredEntries();
+    function sqlColors($date_begin, $date_end, $users) {
+        $sql = self::sqlColoredEntries($date_begin, $date_end, $users);
 
         return array(
          "select
@@ -232,8 +243,8 @@ order by perform_date", array(':user_id'=>User::$user->id,
 	 $sql[1]);
     }
 
-    function sqlGroupByColor() {
-        $sql = self::sqlColoredEntries();
+    function sqlGroupByColor($date_begin, $date_end, $users) {
+        $sql = self::sqlColoredEntries($date_begin, $date_end, $users);
 
         return array(
          "select
@@ -256,13 +267,13 @@ order by perform_date", array(':user_id'=>User::$user->id,
 	 $sql[1]);
     }
 
-    function colors() {
-        $sql = self::sqlColors();
+    function colors($date_begin, $date_end, $users) {
+        $sql = self::sqlColors($date_begin, $date_end, $users);
         return db::fetchList($sql[0], $sql[1]);
     }
 
-    function groupByColor() {
-    	$sql = self::sqlGroupByColor();
+    function groupByColor($date_begin, $date_end, $users) {
+    	$sql = self::sqlGroupByColor($date_begin, $date_end, $users);
         $hours = db::fetchList($sql[0], $sql[1]);
 
 	$hours_by_date = array();

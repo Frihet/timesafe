@@ -7,8 +7,18 @@ extends Controller
 {
     function viewRun()
     {
-        $colors = Entry::colors();
-	$hours_by_date = Entry::groupByColor();
+
+        $date_end = date('Y-m-d',Entry::getBaseDate());
+        $date_begin = date('Y-m-d',Entry::getBaseDate()-(Entry::getDateCount()-1)*3600*24);
+
+	$all = User::getAllUsers();
+	$user_ids = array();
+	foreach (param('users',array(User::$user->name)) as $usr) {
+	    $user_ids[] = $all[$usr]->id;
+	}
+	
+        $colors = Entry::colors($date_begin, $date_end, $user_ids);
+	$hours_by_date = Entry::groupByColor($date_begin, $date_end, $user_ids);
 	
 	$color_to_idx = array();
 	$idx_to_color = array();
