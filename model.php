@@ -255,14 +255,13 @@ order by perform_date", array(':user_id'=>User::$user->id,
            color_r,
 	   color_g,
 	   color_b,
-	   tag_names
+	   max(tag_names) as tag_names
 	  from
 	   ({$sql[0]}) as s
           group by
            color_r,
 	   color_g,
-	   color_b,
-	   tag_names
+	   color_b
 	  order by
 	   tag_names;",
 	 $sql[1]);
