@@ -182,22 +182,33 @@ order by perform_date", array(':user_id'=>User::$user->id,
 	 array());
     }
 
-    function sqlColoredEntries($date_begin, $date_end, $users) {
-        $sql = self::sqlColoredTags();
-
-        $users_sql = '';
-	$users_params = array();
-	if (count($users)) {
-	    $users_varnames = array();
-	    $users[] = $users[0];
+    function arrayToSqlIn($col, $arr) {
+        $sql = 'true';
+	$params = array();
+	if ($arr != null && count($arr)) {
+	    $varnames = array();
+	    $arr[] = $arr[0];
 	    $idx = 0;
-	    foreach ($users as $user) {
-	        $users_varname = ':user_id' . $idx;
-	    	$users_varnames[] = $users_varname;
-		$users_params[$users_varname] = $user;
+	    foreach ($arr as $item) {
+	        $varname = str_replace(".", "_", ":__{$col}_{$idx}");
+	    	$varnames[] = $varname;
+		$params[$varname] = $item;
 		$idx++;
 	    }
-	    $users_sql = "and e.user_id in (" . implode(', ', $users_varnames) . ")";
+	    $items = implode(', ', $varnames);
+	    $sql = "{$col} in ({$items})";
+	}
+	return array($sql, $params);
+    }
+
+    function sqlColoredEntries($filter) {
+        $sql = self::sqlColoredTags();
+	$user_sql = self::arrayToSqlIn("e.user_id", isset($filter['users']) ? $filter['users'] : array());
+	$project_sql = self::arrayToSqlIn("p.name", isset($filter['projects']) ? $filter['projects'] : array());
+
+	$tag_sql = self::arrayToSqlIn("t.name", isset($filter['tags']) ? $filter['tags'] : array());
+	if ($tag_sql[0] != "true") {
+	    $tag_sql[0] = "e.id in (select et.entry_id from tr_tag_map et join tr_tag t on et.tag_id = t.id where {$tag_sql[0]})";
 	}
 
         return array(
@@ -209,21 +220,25 @@ order by perform_date", array(':user_id'=>User::$user->id,
 	   array_agg(t.name) as tag_names
 	  from
 	   tr_entry e
+	   join tr_project p on
+            e.project_id = p.id
 	   left outer join ({$sql[0]}) t on
 	    e.id = t.entry_id
 	  where
 	   perform_date <= :date_end 
 	   and perform_date >= :date_begin 
-           {$users_sql}
+           and {$user_sql[0]}
+           and {$project_sql[0]}
+	   and {$tag_sql[0]}
 	  group by
 	   e.perform_date,e.id,e.minutes",
-	 array_merge($sql[1], $users_params,
-	  array(':date_end'=>$date_end,
-	        ':date_begin'=>$date_begin)));
+	 array_merge($sql[1], $user_sql[1], $project_sql[1], $tag_sql[1],
+	  array(':date_end'=>$filter['date_end'],
+	        ':date_begin'=>$filter['date_begin'])));
     }
 
-    function sqlColors($date_begin, $date_end, $users) {
-        $sql = self::sqlColoredEntries($date_begin, $date_end, $users);
+    function sqlColors($filter) {
+        $sql = self::sqlColoredEntries($filter);
 
         return array(
          "select
@@ -243,8 +258,8 @@ order by perform_date", array(':user_id'=>User::$user->id,
 	 $sql[1]);
     }
 
-    function sqlGroupByColor($date_begin, $date_end, $users) {
-        $sql = self::sqlColoredEntries($date_begin, $date_end, $users);
+    function sqlGroupByColor($filter) {
+        $sql = self::sqlColoredEntries($filter);
 
         return array(
          "select
@@ -267,13 +282,13 @@ order by perform_date", array(':user_id'=>User::$user->id,
 	 $sql[1]);
     }
 
-    function colors($date_begin, $date_end, $users) {
-        $sql = self::sqlColors($date_begin, $date_end, $users);
+    function colors($filter) {
+        $sql = self::sqlColors($filter);
         return db::fetchList($sql[0], $sql[1]);
     }
 
-    function groupByColor($date_begin, $date_end, $users) {
-    	$sql = self::sqlGroupByColor($date_begin, $date_end, $users);
+    function groupByColor($filter) {
+    	$sql = self::sqlGroupByColor($filter);
         $hours = db::fetchList($sql[0], $sql[1]);
 
 	$hours_by_date = array();
