@@ -88,17 +88,40 @@ extends Controller
 	 'tags' => isset($_GET['tags']) ? $_GET['tags'] : array(),
 	 'users' => $user_ids
 	);
+	$colors = Entry::colors($filter);
 	$hours_by_date = Entry::coloredEntries($filter);
+
+	$color_to_idx = array();
+	$idx_to_color = array();
+	$idx_to_tag_names = array();
+	$idx = 0;
+	foreach ($colors as $color) {
+	    $idx_to_color[$idx] = array($color['color_r'], $color['color_g'], $color['color_b']);
+	    $idx_to_tag_names[$idx] = $color['tag_names'];
+	    $colorname = '#' . str_pad(dechex($color['color_r']), 2, "0", STR_PAD_LEFT) . str_pad(dechex($color['color_g']), 2, "0", STR_PAD_LEFT) . str_pad(dechex($color['color_b']), 2, "0", STR_PAD_LEFT);
+	    $color_to_idx[$colorname] = $idx;
+	    $idx++;
+	}
         
 	$content .= "<table class='report_timetable'><tr><th>Date</th><th></th><th>User</th><th>Project</th><th>Minutes</th><th>Tags</th><th>Description</th></tr>";
+	$sums = array();
 	foreach ($hours_by_date as $date => $hours) {
 	    $date = date('Y-m-d', $date);
 	    foreach ($hours as $hour) {
 	        $color = '#' . str_pad(dechex($hour['color_r']), 2, "0", STR_PAD_LEFT) . str_pad(dechex($hour['color_g']), 2, "0", STR_PAD_LEFT) . str_pad(dechex($hour['color_b']), 2, "0", STR_PAD_LEFT);
+		if (!isset($sums[$color])) $sums[$color] = 0;
+		$sums[$color] += $hour['minutes'];
 	        $content .= "<tr><th>{$date}</th><td style='background: {$color}'>&nbsp;</td><td>{$hour['user_fullname']}</td><td>{$hour['project']}</td><td>{$hour['minutes']}</td><td>{$hour['tag_names']}</td><td>{$hour['description']}</td></tr>";
 		$date = '';
 	    }
         }
+	$content .= "<tr><th colspan='7'>Sum</th></tr>";
+	foreach ($sums as $color => $sum) {
+	    $tags = $idx_to_tag_names[$color_to_idx[$color]];
+	    $content .= "<tr><th>{$tags}</th><td style='background: {$color}'>&nbsp;</td><td></td><td></td><td>{$sum}</td><td></td><td></td></tr>";
+	    $title = "";
+	}
+
         $content .= "</table>";
 
         $this->show(null, $content);
