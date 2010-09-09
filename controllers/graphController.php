@@ -13,7 +13,7 @@ extends Controller
 
 	$all = User::getAllUsers();
 	$user_ids = array();
-	foreach (param('users',array(User::$user->name)) as $usr) {
+	foreach (param('users',array()) as $usr) {
 	    $user_ids[] = $all[$usr]->id;
 	}
 	
@@ -62,8 +62,8 @@ extends Controller
 	}
 */
 	
-	$h->setParams(array('width' => 640,
-                            'height' => 240));
+	$h->setParams(array('width' => (int) param('width', 640),
+                            'height' => (int) param('height', 240)));
 
         $h->setLegend($idx_to_tag_names);
 

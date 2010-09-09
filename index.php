@@ -76,6 +76,10 @@ extends Application
 	    echo "</li>\n";
 
 	    echo "<li>";
+	    echo makeLink(makeUrl(array("controller"=>"report")), "Reporting", $is_tr?'selected':null);
+	    echo "</li>\n";
+
+	    echo "<li>";
 	    echo makeLink(makeUrl(array("controller"=>"adminUser")), "Users", $is_admin?'selected':null);
 	    echo "</li>\n";
 
