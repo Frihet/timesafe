@@ -83,7 +83,7 @@ extends Controller
 	    $show_hour_summary_per_user = isset($_GET['show_hour_summary_per_user_'.$report]) ? $_GET['show_hour_summary_per_user_'.$report] == 't' : true;
 	    $show_hour_summary = isset($_GET['show_hour_summary_'.$report]) ? $_GET['show_hour_summary_'.$report] == 't' : true;
 
-	    $hour_list_order = isset($_GET['hour_list_order_'.$report]) ? explode(',', $_GET['hour_list_order_'.$report]) : array('perform_date','user','project,tag_names');
+	    $hour_list_order = isset($_GET['hour_list_order_'.$report]) ? explode(',', $_GET['hour_list_order_'.$report]) : array('perform_date','user_fullname','project,tag_names');
 
 	    $form .= form::makeCheckbox('show_graph_'.$report, $show_graph, "Graph", null, null, array('onchange'=>'submit();'));
 	    $form .= form::makeCheckbox('show_hour_list_'.$report, $show_hour_list, "Hour list", null, null, array('onchange'=>'submit();'));
@@ -105,7 +105,7 @@ extends Controller
 	    $show_hour_summary_per_user = isset($_GET['show_hour_summary_per_user_'.$report]) ? $_GET['show_hour_summary_per_user_'.$report] == 't' : true;
 	    $show_hour_summary = isset($_GET['show_hour_summary_'.$report]) ? $_GET['show_hour_summary_'.$report] == 't' : true;
 
-	    $hour_list_order = isset($_GET['hour_list_order_'.$report]) ? explode(',', $_GET['hour_list_order_'.$report]) : array('perform_date','user','project','tag_names');
+	    $hour_list_order = isset($_GET['hour_list_order_'.$report]) ? explode(',', $_GET['hour_list_order_'.$report]) : array('perform_date','user_fullname','project','tag_names');
 
 	    if ($show_graph) {
 	        $params = array('controller'=>'graph', 'width' => '1024', 'height' => '480', 'date' => param('date'));
@@ -166,12 +166,41 @@ extends Controller
 	    }
 
 	    if ($show_hour_list) {
-		$content .= "<table class='report_timetable'><tr><th>Date</th><th></th><th>Minutes</th><th>User</th><th>Project</th><th>Tags</th><th>Description</th></tr>";
+	        $columns = array('perform_date' => 'Date', 'minutes' => 'Minutes', 'user_fullname' => 'User', 'project' => 'Project', 'tag_names' => 'Tags', 'description' => 'Description');
+                $ordered_columns = array();
+		foreach ($hour_list_order as $col) {
+		    $ordered_columns[$col] = $columns[$col];
+		    unset($columns[$col]);
+		}
+		$columns = array_merge($ordered_columns, $columns);
+
+		$content .= "<table class='report_timetable'>";
+		$content .= " <tr>";
+		foreach($columns as $col => $col_desc) {
+		    if ($col == 'tag_names') {
+		        $content .= "<th></th>";
+ 		    }
+		    $content .= "<th>{$col_desc}</th>";
+	        }
+		$content .= " </tr>";
+
 		foreach ($hours_by_date as $hours) {
 		    foreach ($hours as $hour) {
-			$color = util::colorToHex($hour['color_r'], $hour['color_g'], $hour['color_b']);
-			$hour_date = date('Y-m-d', $hour['perform_date']);
-			$content .= "<tr><th>{$hour_date}</th><td style='background: {$color}'>&nbsp;</td><td>{$hour['minutes']}</td><td>{$hour['user_fullname']}</td><td>{$hour['project']}</td><td>{$hour['tag_names']}</td><td>{$hour['description']}</td></tr>";
+			$content .= " <tr>";
+			$first = true;
+			foreach($columns as $col => $col_desc) {
+			    $tag = $first ? 'th' : 'td';
+			    $value = $hour[$col];
+			    if ($col == 'perform_date')
+			        $value = date('Y-m-d', $value);
+			    if ($col == 'tag_names') {
+			        $color = util::colorToHex($hour['color_r'], $hour['color_g'], $hour['color_b']);
+			        $content .= "<{$tag} style='background: {$color}'>&nbsp;</{$tag}>";
+			    }
+			    $content .= "<{$tag}>{$value}</{$tag}>";
+			    $first = false;
+			}
+			$content .= " </tr>";
 		    }
 		}
 		$content .= "</table>";
