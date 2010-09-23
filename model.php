@@ -182,7 +182,7 @@ order by perform_date", array(':user_id'=>User::$user->id,
 	 array());
     }
 
-    function sqlColoredEntries($filter) {
+    function sqlColoredEntries($filter, $order) {
         $sql = self::sqlColoredTags();
 	$user_sql = util::arrayToSqlIn("e.user_id", isset($filter['users']) ? $filter['users'] : array());
 	$project_sql = util::arrayToSqlIn("p.name", isset($filter['projects']) ? $filter['projects'] : array());
@@ -191,6 +191,8 @@ order by perform_date", array(':user_id'=>User::$user->id,
 	if ($tag_sql[0] != "true") {
 	    $tag_sql[0] = "e.id in (select et.entry_id from tr_tag_map et join tr_tag t on et.tag_id = t.id where {$tag_sql[0]})";
 	}
+
+	$order = implode(',',  $order);
 
         return array(
          "select
@@ -222,14 +224,14 @@ order by perform_date", array(':user_id'=>User::$user->id,
 	  group by
 	   e.id, u.id, u.name, u.fullname, p.id, p.name, e.description, e.perform_date, e.minutes
 	  order by
-	   e.perform_date",
+           {$order}",
 	 array_merge($sql[1], $user_sql[1], $project_sql[1], $tag_sql[1],
 	  array(':date_end'=>$filter['date_end'],
 	        ':date_begin'=>$filter['date_begin'])));
     }
 
-    function sqlColors($filter) {
-        $sql = self::sqlColoredEntries($filter);
+    function sqlColors($filter = array()) {
+        $sql = self::sqlColoredEntries($filter, array('perform_date'));
 
         return array(
          "select
@@ -249,7 +251,7 @@ order by perform_date", array(':user_id'=>User::$user->id,
     }
 
     function sqlGroupByColor($filter) {
-        $sql = self::sqlColoredEntries($filter);
+        $sql = self::sqlColoredEntries($filter, array('perform_date'));
 
         return array(
          "select
@@ -277,9 +279,9 @@ order by perform_date", array(':user_id'=>User::$user->id,
         return db::fetchList($sql[0], $sql[1]);
     }
 
-    function coloredEntries($filter) {
-        $sql = self::sqlColoredEntries($filter);
-        return self::groupByColumn(db::fetchList($sql[0], $sql[1]), "perform_date");
+    function coloredEntries($filter, $order = array('perform_date')) {
+        $sql = self::sqlColoredEntries($filter, $order);
+        return self::groupByColumn(db::fetchList($sql[0], $sql[1]), $order[0]);
     }
 
     function groupByColumn($items, $col) {

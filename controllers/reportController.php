@@ -56,6 +56,11 @@ extends Controller
         $form = "";
 	$hidden = array('controller' => 'report', 'reports' => $reports);
 	if (param('date')) $hidden['date']  = param('date');
+
+	$all_users = User::getAllUsers();
+	$all_tags = Tag::fetch();
+	$all_projects = Project::getProjects();
+
 	for ($report = 0; $report < $reports; $report++) {
             $form .= "<div class='report_form_part'>";
 	    $form .= "<table>
@@ -63,28 +68,29 @@ extends Controller
 		       <tr>";
 
 	    $users = isset($_GET['users_'.$report]) ? $_GET['users_'.$report] : array();
-	    $form .= "<td>" . form::makeSelect('users_'.$report, form::makeSelectList(User::getAllUsers(),'name', 'fullname'), $users, null, array('onchange'=>'submit();')) . "</td>";
+	    $form .= "<td>" . form::makeSelect('users_'.$report, form::makeSelectList($all_users, 'name', 'fullname'), $users, null, array('onchange'=>'submit();')) . "</td>";
 
 	    $tags = isset($_GET['tags_'.$report]) ? $_GET['tags_'.$report] : array();
-	    $form .= "<td>" . form::makeSelect('tags_'.$report, form::makeSelectList(Tag::fetch(), 'name', 'name'), $tags, null, array('onchange'=>'submit();')) . "</td>";
+	    $form .= "<td>" . form::makeSelect('tags_'.$report, form::makeSelectList($all_tags, 'name', 'name'), $tags, null, array('onchange'=>'submit();')) . "</td>";
 
 	    $projects = isset($_GET['projects_'.$report]) ? $_GET['projects_'.$report] : array();
-	    $form .= "<td>" . form::makeSelect('projects_'.$report, form::makeSelectList(Project::getProjects(), 'name', 'name'), $projects, null, array('onchange'=>'submit();')) . "</td>";
+	    $form .= "<td>" . form::makeSelect('projects_'.$report, form::makeSelectList($all_projects, 'name', 'name'), $projects, null, array('onchange'=>'submit();')) . "</td>";
 
 	    $form .= "</tr></table>";
-
-
-	    $form .= "<h2>Include</h2>";
 
 	    $show_graph = isset($_GET['show_graph_'.$report]) ? $_GET['show_graph_'.$report] == 't' : true;
 	    $show_hour_list = isset($_GET['show_hour_list_'.$report]) ? $_GET['show_hour_list_'.$report] == 't' : true;
 	    $show_hour_summary_per_user = isset($_GET['show_hour_summary_per_user_'.$report]) ? $_GET['show_hour_summary_per_user_'.$report] == 't' : true;
 	    $show_hour_summary = isset($_GET['show_hour_summary_'.$report]) ? $_GET['show_hour_summary_'.$report] == 't' : true;
 
+	    $hour_list_order = isset($_GET['hour_list_order_'.$report]) ? explode(',', $_GET['hour_list_order_'.$report]) : array('perform_date','user','project,tag_names');
+
 	    $form .= form::makeCheckbox('show_graph_'.$report, $show_graph, "Graph", null, null, array('onchange'=>'submit();'));
 	    $form .= form::makeCheckbox('show_hour_list_'.$report, $show_hour_list, "Hour list", null, null, array('onchange'=>'submit();'));
 	    $form .= form::makeCheckbox('show_hour_summary_per_user_'.$report, $show_hour_summary_per_user, "Hour summary per user", null, null, array('onchange'=>'submit();'));
 	    $form .= form::makeCheckbox('show_hour_summary_'.$report, $show_hour_summary, "Total hour summary", null, null, array('onchange'=>'submit();'));
+	    $form .= '<div>Sort order for hour list: ' . form::makeText('hour_list_order_'.$report, implode(',', $hour_list_order), null, null, array('onchange'=>'submit();')) . "</div>";
+
 	    $form .= "</div>";
 	}
         $content .= form::makeForm($form, $hidden, 'get');
@@ -98,6 +104,8 @@ extends Controller
 	    $show_hour_list = isset($_GET['show_hour_list_'.$report]) ? $_GET['show_hour_list_'.$report] == 't' : true;
 	    $show_hour_summary_per_user = isset($_GET['show_hour_summary_per_user_'.$report]) ? $_GET['show_hour_summary_per_user_'.$report] == 't' : true;
 	    $show_hour_summary = isset($_GET['show_hour_summary_'.$report]) ? $_GET['show_hour_summary_'.$report] == 't' : true;
+
+	    $hour_list_order = isset($_GET['hour_list_order_'.$report]) ? explode(',', $_GET['hour_list_order_'.$report]) : array('perform_date','user','project','tag_names');
 
 	    if ($show_graph) {
 	        $params = array('controller'=>'graph', 'width' => '1024', 'height' => '480', 'date' => param('date'));
@@ -127,7 +135,7 @@ extends Controller
 	     'users' => $user_ids
 	    );
 	    $colors = Entry::colors($filter);
-	    $hours_by_date = Entry::coloredEntries($filter);
+	    $hours_by_date = Entry::coloredEntries($filter, $hour_list_order);
 
 	    $color_to_idx = array();
 	    $idx_to_color = array();
@@ -159,12 +167,11 @@ extends Controller
 
 	    if ($show_hour_list) {
 		$content .= "<table class='report_timetable'><tr><th>Date</th><th></th><th>Minutes</th><th>User</th><th>Project</th><th>Tags</th><th>Description</th></tr>";
-		foreach ($hours_by_date as $date => $hours) {
-		    $date = date('Y-m-d', $date);
+		foreach ($hours_by_date as $hours) {
 		    foreach ($hours as $hour) {
 			$color = util::colorToHex($hour['color_r'], $hour['color_g'], $hour['color_b']);
-			$content .= "<tr><th>{$date}</th><td style='background: {$color}'>&nbsp;</td><td>{$hour['minutes']}</td><td>{$hour['user_fullname']}</td><td>{$hour['project']}</td><td>{$hour['tag_names']}</td><td>{$hour['description']}</td></tr>";
-			$date = '';
+			$hour_date = date('Y-m-d', $hour['perform_date']);
+			$content .= "<tr><th>{$hour_date}</th><td style='background: {$color}'>&nbsp;</td><td>{$hour['minutes']}</td><td>{$hour['user_fullname']}</td><td>{$hour['project']}</td><td>{$hour['tag_names']}</td><td>{$hour['description']}</td></tr>";
 		    }
 		}
 		$content .= "</table>";
