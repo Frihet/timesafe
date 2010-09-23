@@ -63,39 +63,39 @@ extends Controller
 	$all_projects = Project::getProjects();
 
 	for ($report = 0; $report < $reports; $report++) {
-            $form .= "<div class='report_form_part'>";
-	    $form .= "<table>
-		       <tr><th>Users</th><th>Tags</th><th>Projects</th></tr>
-		       <tr>";
-
-	    $users = isset($_GET['users_'.$report]) ? $_GET['users_'.$report] : array();
-	    $form .= "<td>" . form::makeSelect('users_'.$report, form::makeSelectList($all_users, 'name', 'fullname'), $users, null, array('onchange'=>'submit();')) . "</td>";
-
-	    $tags = isset($_GET['tags_'.$report]) ? $_GET['tags_'.$report] : array();
-	    $form .= "<td>" . form::makeSelect('tags_'.$report, form::makeSelectList($all_tags, 'name', 'name'), $tags, null, array('onchange'=>'submit();')) . "</td>";
-
-	    $projects = isset($_GET['projects_'.$report]) ? $_GET['projects_'.$report] : array();
-	    $form .= "<td>" . form::makeSelect('projects_'.$report, form::makeSelectList($all_projects, 'name', 'name'), $projects, null, array('onchange'=>'submit();')) . "</td>";
-
-	    $form .= "</tr></table>";
-
 	    $show_graph = isset($_GET['show_graph_'.$report]) ? $_GET['show_graph_'.$report] == 't' : true;
 	    $show_hour_list = isset($_GET['show_hour_list_'.$report]) ? $_GET['show_hour_list_'.$report] == 't' : true;
 	    $show_hour_summary = isset($_GET['show_hour_summary_'.$report]) ? $_GET['show_hour_summary_'.$report] == 't' : true;
 
 	    $hour_list_order = isset($_GET['hour_list_order_'.$report]) ? explode(',', $_GET['hour_list_order_'.$report]) : array('perform_date','user_fullname','project','tag_names');
 
-	    $form .= form::makeCheckbox('show_graph_'.$report, $show_graph, "Graph", null, null, array('onchange'=>'submit();'));
-	    $form .= form::makeCheckbox('show_hour_list_'.$report, $show_hour_list, "Hour list", null, null, array('onchange'=>'submit();'));
-	    $form .= form::makeCheckbox('show_hour_summary_'.$report, $show_hour_summary, "Hour summary", null, null, array('onchange'=>'submit();'));
+	    $users = isset($_GET['users_'.$report]) ? $_GET['users_'.$report] : array();
+	    $tags = isset($_GET['tags_'.$report]) ? $_GET['tags_'.$report] : array();
+	    $projects = isset($_GET['projects_'.$report]) ? $_GET['projects_'.$report] : array();
 
-	    $form .= '<div>Sort order: ';
+
+            $form .= "<div class='report_form_part'>";
+	    $form .= "<table>
+		       <tr><th>Users</th><th>Tags</th><th>Projects</th><th>Sort order</th></tr>
+		       <tr>";
+
+	    $form .= "<td>" . form::makeSelect('users_'.$report, form::makeSelectList($all_users, 'name', 'fullname'), $users, null, array('onchange'=>'submit();')) . "</td>";
+	    $form .= "<td>" . form::makeSelect('tags_'.$report, form::makeSelectList($all_tags, 'name', 'name'), $tags, null, array('onchange'=>'submit();')) . "</td>";
+	    $form .= "<td>" . form::makeSelect('projects_'.$report, form::makeSelectList($all_projects, 'name', 'name'), $projects, null, array('onchange'=>'submit();')) . "</td>";
+
+	    $form .= '<td>';
 	    foreach ($hour_list_order as $item) {
 		$new_order = array_merge(array($item), array_diff($hour_list_order, array($item)));
 		$params = array_merge($_GET, array('hour_list_order_'.$report => implode(',',$new_order)));
-		$form .= "<a href='" . makeUrl($params) . "' />{$hour_list_columns[$item]}</a> ";
+		$form .= "<a href='" . makeUrl($params) . "' />{$hour_list_columns[$item]}</a><br>";
 	    }
-	    $form .= "</div>";
+	    $form .= "</td>";
+
+	    $form .= "</tr></table>";
+
+	    $form .= form::makeCheckbox('show_graph_'.$report, $show_graph, "Graph", null, null, array('onchange'=>'submit();'));
+	    $form .= form::makeCheckbox('show_hour_list_'.$report, $show_hour_list, "Hour list", null, null, array('onchange'=>'submit();'));
+	    $form .= form::makeCheckbox('show_hour_summary_'.$report, $show_hour_summary, "Hour summary", null, null, array('onchange'=>'submit();'));
 
 	    $form .= "</div>";
 	}
