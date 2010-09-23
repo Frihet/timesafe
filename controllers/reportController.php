@@ -43,31 +43,31 @@ extends Controller
         $prev_link = makeUrl(array('date'=>$prev));
         $next_link = makeUrl(array('date'=>$next));
         $now_link = makeUrl(array('date'=>$now));
-        $content .= "<p><a href='$prev_link'>«earlier</a> <a href='$now_link'>today</a>  <a href='$next_link'>later»</a></p>";
-
-        $form = "";
-	$hidden = array_merge($_GET, array('controller' => 'report'));
-	unset($hidden['reports']);
-	$reports = isset($_GET['reports']) ? intval($_GET['reports']) : 1;
-	$form .= 'Number of reports: ' . form::makeText('reports', $reports, null, null, array('onchange'=>'submit();'));
-	$content .= form::makeForm($form, $hidden, 'get');
 
 	$hour_list_columns = array('perform_date' => 'Date', 'minutes' => 'Minutes', 'user_fullname' => 'User', 'project' => 'Project', 'tag_names' => 'Tags', 'description' => 'Description');
 
         $form = "";
+	$reports = isset($_GET['reports']) ? intval($_GET['reports']) : 1;
 	$hidden = array('controller' => 'report', 'reports' => $reports);
 	if (param('date')) $hidden['date']  = param('date');
+
+        $form .= "<p><a href='$prev_link'>«earlier</a> <a href='$now_link'>today</a>  <a href='$next_link'>later»</a></p>";
+	$form .= '<div>Number of reports: ' . form::makeText('reports', $reports, null, null, array('onchange'=>'submit();')) . "</div>";
 
 	$all_users = User::getAllUsers();
 	$all_tags = Tag::fetch();
 	$all_projects = Project::getProjects();
 
 	for ($report = 0; $report < $reports; $report++) {
+	    $title = isset($_GET['title_'.$report]) ? $_GET['title_'.$report] : "";
+	    $cls = isset($_GET['cls_'.$report]) ? $_GET['cls_'.$report] : "";
+
 	    $show_graph = isset($_GET['show_graph_'.$report]) ? $_GET['show_graph_'.$report] == 't' : true;
 	    $show_hour_list = isset($_GET['show_hour_list_'.$report]) ? $_GET['show_hour_list_'.$report] == 't' : true;
 	    $show_hour_summary = isset($_GET['show_hour_summary_'.$report]) ? $_GET['show_hour_summary_'.$report] == 't' : true;
 
 	    $hour_list_order = isset($_GET['hour_list_order_'.$report]) ? explode(',', $_GET['hour_list_order_'.$report]) : array('perform_date','user_fullname','project','tag_names');
+	    $hidden['hour_list_order_'.$report] = implode(',', $hour_list_order);
 
 	    $users = isset($_GET['users_'.$report]) ? $_GET['users_'.$report] : array();
 	    $tags = isset($_GET['tags_'.$report]) ? $_GET['tags_'.$report] : array();
@@ -75,6 +75,8 @@ extends Controller
 
 
             $form .= "<div class='report_form_part'>";
+	    $form .= "Title: " . form::makeText('title_'.$report, $title, null, null, array('onchange'=>'submit();'));
+	    $form .= "Class: " . form::makeText('cls_'.$report, $cls, null, null, array('onchange'=>'submit();'));
 	    $form .= "<table>
 		       <tr><th>Users</th><th>Tags</th><th>Projects</th><th>Sort order</th></tr>
 		       <tr>";
@@ -103,6 +105,9 @@ extends Controller
 	$content .= "<div class='report_form_end'></div>";
 
 	for ($report = 0; $report < $reports; $report++) {
+	    $title = isset($_GET['title_'.$report]) ? $_GET['title_'.$report] : "";
+	    $cls = isset($_GET['cls_'.$report]) ? $_GET['cls_'.$report] : "";
+
 	    $users = isset($_GET['users_'.$report]) ? $_GET['users_'.$report] : array();
 	    $tags = isset($_GET['tags_'.$report]) ? $_GET['tags_'.$report] : array();
 	    $projects = isset($_GET['projects_'.$report]) ? $_GET['projects_'.$report] : array();
@@ -111,17 +116,6 @@ extends Controller
 	    $show_hour_summary = isset($_GET['show_hour_summary_'.$report]) ? $_GET['show_hour_summary_'.$report] == 't' : true;
 
 	    $hour_list_order = isset($_GET['hour_list_order_'.$report]) ? explode(',', $_GET['hour_list_order_'.$report]) : array('perform_date','user_fullname','project','tag_names');
-
-	    if ($show_graph) {
-	        $params = array('controller'=>'graph', 'width' => '1024', 'height' => '480', 'date' => param('date'));
-		foreach ($_GET as $name => $value) {
-		    if (util::ends_with($name, "_{$report}")) {
-		        $name = substr($name, 0, strlen($name)-strlen("_{$report}"));
-		        $params[$name] = $value;
-		    }
-		}
-		$content .= "<div class='figure'><img src='" . makeUrl($params) . "' /></div>";
-	    }
 
 	    $date_end = date('Y-m-d',Entry::getBaseDate());
 	    $date_begin = date('Y-m-d',Entry::getBaseDate()-(Entry::getDateCount()-1)*3600*24);
@@ -177,6 +171,22 @@ extends Controller
 		}
 	    }
 
+	    $content .= "<div class='{$cls}'>";
+	    if ($title != "") {
+	        $content .= "<h1>{$title}</h1>";
+	    }
+
+	    if ($show_graph) {
+	        $params = array('controller'=>'graph', 'width' => '1024', 'height' => '480', 'date' => param('date'));
+		foreach ($_GET as $name => $value) {
+		    if (util::ends_with($name, "_{$report}")) {
+		        $name = substr($name, 0, strlen($name)-strlen("_{$report}"));
+		        $params[$name] = $value;
+		    }
+		}
+		$content .= "<img src='" . makeUrl($params) . "' />";
+	    }
+
 	    if ($show_hour_list) {
 	        $columns = array_merge($hour_list_columns);
                 $ordered_columns = array();
@@ -207,7 +217,7 @@ extends Controller
 			        $value = date('Y-m-d', $value);
 			    if ($col == 'tag_names') {
 			        $color = util::colorToHex($hour['color_r'], $hour['color_g'], $hour['color_b']);
-			        $content .= "<{$tag} style='background: {$color}'>&nbsp;</{$tag}>";
+			        $content .= "<{$tag} style='background: {$color}; color: {$color}'>#</{$tag}>";
 			    }
 			    $content .= "<{$tag}>{$value}</{$tag}>";
 			    $first = false;
@@ -244,7 +254,7 @@ extends Controller
 		    foreach ($col2values as $col2value) {
 		        $color = $idx_to_color[$tag_names_to_idx[$col2value]];
 			$color = util::colorToHex($color[0], $color[1], $color[2]);
-			$content .= "<td style='background: {$color}'>&nbsp;</td>";
+			$content .= "<td style='background: {$color}; color: {$color}'>#</td>";
 		    }
 		    $content .= "  <td></td>";
 		    $content .= " </tr>";
@@ -259,7 +269,7 @@ extends Controller
 			if ($col1 == 'tag_names') {
 			    $color = $idx_to_color[$tag_names_to_idx[$col1value]];
 			    $color = util::colorToHex($color[0], $color[1], $color[2]);
-			    $content .= "<td style='background: {$color}'>&nbsp;</td>";
+			    $content .= "<td style='background: {$color}; color: {$color}'>#</td>";
 			}
 			foreach ($col2values as $col2value) {
 			    if ($col2value != 'total') {
@@ -276,6 +286,7 @@ extends Controller
 		}
 		$content .= "</table>";
 	    }
+	    $content .= "</div>";
 	}
 
         $this->show(null, $content);

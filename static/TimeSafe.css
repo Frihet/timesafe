@@ -263,3 +263,21 @@ ul.main_menu li a {
 .report_form_end {
  clear: both;
 }
+
+@media print {
+ .copyright,
+ .main_menu,
+ .content form {
+  display: none;
+ }
+ .content {
+  width: 100%;
+  margin: 0;
+ }
+ .content_inner {
+  border: none;
+ }
+ body {
+  background-image: none;
+ }
+}

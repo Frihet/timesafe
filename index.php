@@ -51,7 +51,7 @@ extends Application
         $this->addScript('static/TimeSafe.js');
         //$this->addScript('static/jquery-ui.js');
         //$this->addScript('static/jquery.flot.js');
-        $this->addStyle('static/TimeSafe.css');
+        $this->addStyle('static/TimeSafe.css', 'screen,projection,print');
         //$this->addStyle('static/jquery-ui.css');
 	//require_once('egs.php');
 
