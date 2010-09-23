@@ -52,6 +52,7 @@ extends Controller
 	$form .= 'Number of reports: ' . form::makeText('reports', $reports, null, null, array('onchange'=>'submit();'));
 	$content .= form::makeForm($form, $hidden, 'get');
 
+	$hour_list_columns = array('perform_date' => 'Date', 'minutes' => 'Minutes', 'user_fullname' => 'User', 'project' => 'Project', 'tag_names' => 'Tags', 'description' => 'Description');
 
         $form = "";
 	$hidden = array('controller' => 'report', 'reports' => $reports);
@@ -83,13 +84,20 @@ extends Controller
 	    $show_hour_summary_per_user = isset($_GET['show_hour_summary_per_user_'.$report]) ? $_GET['show_hour_summary_per_user_'.$report] == 't' : true;
 	    $show_hour_summary = isset($_GET['show_hour_summary_'.$report]) ? $_GET['show_hour_summary_'.$report] == 't' : true;
 
-	    $hour_list_order = isset($_GET['hour_list_order_'.$report]) ? explode(',', $_GET['hour_list_order_'.$report]) : array('perform_date','user_fullname','project,tag_names');
+	    $hour_list_order = isset($_GET['hour_list_order_'.$report]) ? explode(',', $_GET['hour_list_order_'.$report]) : array('perform_date','user_fullname','project','tag_names');
 
 	    $form .= form::makeCheckbox('show_graph_'.$report, $show_graph, "Graph", null, null, array('onchange'=>'submit();'));
 	    $form .= form::makeCheckbox('show_hour_list_'.$report, $show_hour_list, "Hour list", null, null, array('onchange'=>'submit();'));
 	    $form .= form::makeCheckbox('show_hour_summary_per_user_'.$report, $show_hour_summary_per_user, "Hour summary per user", null, null, array('onchange'=>'submit();'));
 	    $form .= form::makeCheckbox('show_hour_summary_'.$report, $show_hour_summary, "Total hour summary", null, null, array('onchange'=>'submit();'));
-	    $form .= '<div>Sort order for hour list: ' . form::makeText('hour_list_order_'.$report, implode(',', $hour_list_order), null, null, array('onchange'=>'submit();')) . "</div>";
+
+	    $form .= '<div>Sort order for hour list: ';
+	    foreach ($hour_list_order as $item) {
+	      $new_order = array_merge(array($item), array_diff($hour_list_order, array($item)));
+	      $params = array_merge($_GET, array('hour_list_order_'.$report => implode(',',$new_order)));
+	      $form .= "<a href='" . makeUrl($params) . "' />{$hour_list_columns[$item]}</a> ";
+	    }
+	    $form .= "</div>";
 
 	    $form .= "</div>";
 	}
@@ -166,7 +174,7 @@ extends Controller
 	    }
 
 	    if ($show_hour_list) {
-	        $columns = array('perform_date' => 'Date', 'minutes' => 'Minutes', 'user_fullname' => 'User', 'project' => 'Project', 'tag_names' => 'Tags', 'description' => 'Description');
+	        $columns = array_merge($hour_list_columns);
                 $ordered_columns = array();
 		foreach ($hour_list_order as $col) {
 		    $ordered_columns[$col] = $columns[$col];
