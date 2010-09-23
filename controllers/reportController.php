@@ -82,14 +82,12 @@ extends Controller
 	    $show_graph = isset($_GET['show_graph_'.$report]) ? $_GET['show_graph_'.$report] == 't' : true;
 	    $show_hour_list = isset($_GET['show_hour_list_'.$report]) ? $_GET['show_hour_list_'.$report] == 't' : true;
 	    $show_hour_summary = isset($_GET['show_hour_summary_'.$report]) ? $_GET['show_hour_summary_'.$report] == 't' : true;
-	    $show_total_hour_summary = isset($_GET['show_total_hour_summary_'.$report]) ? $_GET['show_total_hour_summary_'.$report] == 't' : true;
 
 	    $hour_list_order = isset($_GET['hour_list_order_'.$report]) ? explode(',', $_GET['hour_list_order_'.$report]) : array('perform_date','user_fullname','project','tag_names');
 
 	    $form .= form::makeCheckbox('show_graph_'.$report, $show_graph, "Graph", null, null, array('onchange'=>'submit();'));
 	    $form .= form::makeCheckbox('show_hour_list_'.$report, $show_hour_list, "Hour list", null, null, array('onchange'=>'submit();'));
 	    $form .= form::makeCheckbox('show_hour_summary_'.$report, $show_hour_summary, "Hour summary", null, null, array('onchange'=>'submit();'));
-	    $form .= form::makeCheckbox('show_total_hour_summary_'.$report, $show_total_hour_summary, "Total hour summary", null, null, array('onchange'=>'submit();'));
 
 	    $form .= '<div>Sort order: ';
 	    foreach ($hour_list_order as $item) {
@@ -111,7 +109,6 @@ extends Controller
 	    $show_graph = isset($_GET['show_graph_'.$report]) ? $_GET['show_graph_'.$report] == 't' : true;
 	    $show_hour_list = isset($_GET['show_hour_list_'.$report]) ? $_GET['show_hour_list_'.$report] == 't' : true;
 	    $show_hour_summary = isset($_GET['show_hour_summary_'.$report]) ? $_GET['show_hour_summary_'.$report] == 't' : true;
-	    $show_total_hour_summary = isset($_GET['show_total_hour_summary_'.$report]) ? $_GET['show_total_hour_summary_'.$report] == 't' : true;
 
 	    $hour_list_order = isset($_GET['hour_list_order_'.$report]) ? explode(',', $_GET['hour_list_order_'.$report]) : array('perform_date','user_fullname','project','tag_names');
 
@@ -152,6 +149,7 @@ extends Controller
 	    foreach ($colors as $color) {
 		$idx_to_color[$idx] = array($color['color_r'], $color['color_g'], $color['color_b']);
 		$idx_to_tag_names[$idx] = $color['tag_names'];
+		$tag_names_to_idx[$color['tag_names']] = $idx;
 		$colorname = util::colorToHex($color['color_r'], $color['color_g'], $color['color_b']);
 		$color_to_idx[$colorname] = $idx;
 		$idx++;
@@ -159,17 +157,22 @@ extends Controller
 
 	    /* Sum stuff up */
 	    $col1 = $hour_list_order[0];
+	    $col2 = $hour_list_order[1];
+	    $col1values = array();
+	    $col2values = array();
 	    $sums = array('total' => array('total' => 0));
 	    foreach ($hours_by_date as $hours) {
 		foreach ($hours as $hour) {
 		    $col1value = $hour[$col1];
-		    $color = util::colorToHex($hour['color_r'], $hour['color_g'], $hour['color_b']);
+		    $col2value = $hour[$col2];
+		    if (!in_array($col1value, $col1values)) $col1values[] = $col1value;
+		    if (!in_array($col2value, $col2values)) $col2values[] = $col2value;
 		    if (!isset($sums[$col1value])) $sums[$col1value] = array('total' => 0);
-		    if (!isset($sums[$col1value][$color])) $sums[$col1value][$color] = 0;
-		    if (!isset($sums['total'][$color])) $sums['total'][$color] = 0;
-		    $sums[$col1value][$color] += $hour['minutes'];
+		    if (!isset($sums[$col1value][$col2value])) $sums[$col1value][$col2value] = 0;
+		    if (!isset($sums['total'][$col2value])) $sums['total'][$col2value] = 0;
+		    $sums[$col1value][$col2value] += $hour['minutes'];
 		    $sums[$col1value]['total'] += $hour['minutes'];
-		    $sums['total'][$color] += $hour['minutes'];
+		    $sums['total'][$col2value] += $hour['minutes'];
 		    $sums['total']['total'] += $hour['minutes'];
 		}
 	    }
@@ -217,59 +220,60 @@ extends Controller
 
 	    if ($show_hour_summary) {
 	        $col1 = $hour_list_order[0];
-	        $title = $hour_list_columns[$col1];
+	        $title1 = $hour_list_columns[$col1];
+	        $col2 = $hour_list_order[1];
+	        $title2 = $hour_list_columns[$col2];
 
 		$content .= "<table class='report_timetable'>";
 		$content .= " <tr>";
-		$content .= "  <th>{$title}</th>";
-		foreach ($colors as $color) {
-		    $content .= "<th>{$color['tag_names']}</th>";
+		$content .= "  <th>{$title1}</th>";
+		if ($col1 == 'tag_names') {
+		    $content .= "  <th></th>";
+		}
+		foreach ($col2values as $col2value) {
+		    if ($col2 == 'perform_date') {
+			$col2value = date('Y-m-d', $col2value);
+		    }
+		    $content .= "<th>{$col2value}</th>";
 		}
 		$content .= "  <th>Total</th>";
 		$content .= " </tr>";
-		$content .= " <tr>";
-		$content .= "  <th></th>";
-		foreach ($colors as $color) {
-		    $color = util::colorToHex($color['color_r'], $color['color_g'], $color['color_b']);
-		    $content .= "<td style='background: {$color}'>&nbsp;</td>";
+		if ($col2 == 'tag_names') {
+		    $content .= " <tr>";
+		    $content .= "  <th></th>";
+		    foreach ($col2values as $col2value) {
+		        $color = $idx_to_color[$tag_names_to_idx[$col2value]];
+			$color = util::colorToHex($color[0], $color[1], $color[2]);
+			$content .= "<td style='background: {$color}'>&nbsp;</td>";
+		    }
+		    $content .= "  <td></td>";
+		    $content .= " </tr>";
 		}
-		$content .= "  <td></td>";
-		$content .= " </tr>";
 
-		foreach ($sums as $col1value => $color_sums) {
+		foreach ($sums as $col1value => $col2_sums) {
 		    if ($col1value != 'total') {
 		        if ($col1 == 'perform_date') {
 			    $col1value = date('Y-m-d', $col1value);
 			}
 			$content .= "<tr><th>{$col1value}</th>";
-			foreach ($colors as $color) {
-			    if ($color != 'total') {
-				$color = util::colorToHex($color['color_r'], $color['color_g'], $color['color_b']);
-				if (isset($color_sums[$color])) {
-				    $content .= "<td>{$color_sums[$color]}</td>";
+			if ($col1 == 'tag_names') {
+			    $color = $idx_to_color[$tag_names_to_idx[$col1value]];
+			    $color = util::colorToHex($color[0], $color[1], $color[2]);
+			    $content .= "<td style='background: {$color}'>&nbsp;</td>";
+			}
+			foreach ($col2values as $col2value) {
+			    if ($col2value != 'total') {
+				if (isset($col2_sums[$col2value])) {
+				    $content .= "<td>{$col2_sums[$col2value]}</td>";
 				} else {
 				    $content .= "<td></td>";
 				}
 			    }
 			}
-			$content .= "<td>{$color_sums['total']}</td>";
+			$content .= "<td>{$col2_sums['total']}</td>";
 			$content .= " </tr>";
 		    }
 		}
-		$content .= "</table>";
-	    }
-
-	    if ($show_total_hour_summary) {
-		$content .= "<table class='report_timetable'>";
-		$content .= "<tr><th>Tags</th><th></th><th>Minutes</th></tr>";
-		foreach ($sums['total'] as $color => $sum) {
-		    if ($color != 'total') {
-			$tags = $idx_to_tag_names[$color_to_idx[$color]];
-			$content .= "<tr><th>{$tags}</th><td style='background: {$color}'>&nbsp;</td><td>{$sum}</td>";
-		    }
-		}
-		$content .= "<tr><th>Total</th><td></td><td>{$sums['total']['total']}</td>";
-
 		$content .= "</table>";
 	    }
 	}
