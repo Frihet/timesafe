@@ -81,21 +81,21 @@ extends Controller
 
 	    $show_graph = isset($_GET['show_graph_'.$report]) ? $_GET['show_graph_'.$report] == 't' : true;
 	    $show_hour_list = isset($_GET['show_hour_list_'.$report]) ? $_GET['show_hour_list_'.$report] == 't' : true;
-	    $show_hour_summary_per_user = isset($_GET['show_hour_summary_per_user_'.$report]) ? $_GET['show_hour_summary_per_user_'.$report] == 't' : true;
 	    $show_hour_summary = isset($_GET['show_hour_summary_'.$report]) ? $_GET['show_hour_summary_'.$report] == 't' : true;
+	    $show_total_hour_summary = isset($_GET['show_total_hour_summary_'.$report]) ? $_GET['show_total_hour_summary_'.$report] == 't' : true;
 
 	    $hour_list_order = isset($_GET['hour_list_order_'.$report]) ? explode(',', $_GET['hour_list_order_'.$report]) : array('perform_date','user_fullname','project','tag_names');
 
 	    $form .= form::makeCheckbox('show_graph_'.$report, $show_graph, "Graph", null, null, array('onchange'=>'submit();'));
 	    $form .= form::makeCheckbox('show_hour_list_'.$report, $show_hour_list, "Hour list", null, null, array('onchange'=>'submit();'));
-	    $form .= form::makeCheckbox('show_hour_summary_per_user_'.$report, $show_hour_summary_per_user, "Hour summary per user", null, null, array('onchange'=>'submit();'));
-	    $form .= form::makeCheckbox('show_hour_summary_'.$report, $show_hour_summary, "Total hour summary", null, null, array('onchange'=>'submit();'));
+	    $form .= form::makeCheckbox('show_hour_summary_'.$report, $show_hour_summary, "Hour summary", null, null, array('onchange'=>'submit();'));
+	    $form .= form::makeCheckbox('show_total_hour_summary_'.$report, $show_total_hour_summary, "Total hour summary", null, null, array('onchange'=>'submit();'));
 
-	    $form .= '<div>Sort order for hour list: ';
+	    $form .= '<div>Sort order: ';
 	    foreach ($hour_list_order as $item) {
-	      $new_order = array_merge(array($item), array_diff($hour_list_order, array($item)));
-	      $params = array_merge($_GET, array('hour_list_order_'.$report => implode(',',$new_order)));
-	      $form .= "<a href='" . makeUrl($params) . "' />{$hour_list_columns[$item]}</a> ";
+		$new_order = array_merge(array($item), array_diff($hour_list_order, array($item)));
+		$params = array_merge($_GET, array('hour_list_order_'.$report => implode(',',$new_order)));
+		$form .= "<a href='" . makeUrl($params) . "' />{$hour_list_columns[$item]}</a> ";
 	    }
 	    $form .= "</div>";
 
@@ -110,8 +110,8 @@ extends Controller
 	    $projects = isset($_GET['projects_'.$report]) ? $_GET['projects_'.$report] : array();
 	    $show_graph = isset($_GET['show_graph_'.$report]) ? $_GET['show_graph_'.$report] == 't' : true;
 	    $show_hour_list = isset($_GET['show_hour_list_'.$report]) ? $_GET['show_hour_list_'.$report] == 't' : true;
-	    $show_hour_summary_per_user = isset($_GET['show_hour_summary_per_user_'.$report]) ? $_GET['show_hour_summary_per_user_'.$report] == 't' : true;
 	    $show_hour_summary = isset($_GET['show_hour_summary_'.$report]) ? $_GET['show_hour_summary_'.$report] == 't' : true;
+	    $show_total_hour_summary = isset($_GET['show_total_hour_summary_'.$report]) ? $_GET['show_total_hour_summary_'.$report] == 't' : true;
 
 	    $hour_list_order = isset($_GET['hour_list_order_'.$report]) ? explode(',', $_GET['hour_list_order_'.$report]) : array('perform_date','user_fullname','project','tag_names');
 
@@ -158,16 +158,17 @@ extends Controller
 	    }
 
 	    /* Sum stuff up */
+	    $col1 = $hour_list_order[0];
 	    $sums = array('total' => array('total' => 0));
-	    foreach ($hours_by_date as $date => $hours) {
+	    foreach ($hours_by_date as $hours) {
 		foreach ($hours as $hour) {
-		    $usr = $hour['user_fullname'];
+		    $col1value = $hour[$col1];
 		    $color = util::colorToHex($hour['color_r'], $hour['color_g'], $hour['color_b']);
-		    if (!isset($sums[$usr])) $sums[$usr] = array('total' => 0);
-		    if (!isset($sums[$usr][$color])) $sums[$usr][$color] = 0;
+		    if (!isset($sums[$col1value])) $sums[$col1value] = array('total' => 0);
+		    if (!isset($sums[$col1value][$color])) $sums[$col1value][$color] = 0;
 		    if (!isset($sums['total'][$color])) $sums['total'][$color] = 0;
-		    $sums[$usr][$color] += $hour['minutes'];
-		    $sums[$usr]['total'] += $hour['minutes'];
+		    $sums[$col1value][$color] += $hour['minutes'];
+		    $sums[$col1value]['total'] += $hour['minutes'];
 		    $sums['total'][$color] += $hour['minutes'];
 		    $sums['total']['total'] += $hour['minutes'];
 		}
@@ -214,10 +215,13 @@ extends Controller
 		$content .= "</table>";
 	    }
 
-	    if ($show_hour_summary_per_user) {
+	    if ($show_hour_summary) {
+	        $col1 = $hour_list_order[0];
+	        $title = $hour_list_columns[$col1];
+
 		$content .= "<table class='report_timetable'>";
 		$content .= " <tr>";
-		$content .= "  <th>User</th>";
+		$content .= "  <th>{$title}</th>";
 		foreach ($colors as $color) {
 		    $content .= "<th>{$color['tag_names']}</th>";
 		}
@@ -232,9 +236,12 @@ extends Controller
 		$content .= "  <td></td>";
 		$content .= " </tr>";
 
-		foreach ($sums as $usr => $color_sums) {
-		    if ($usr != 'total') {
-			$content .= "<tr><th>{$usr}</th>";
+		foreach ($sums as $col1value => $color_sums) {
+		    if ($col1value != 'total') {
+		        if ($col1 == 'perform_date') {
+			    $col1value = date('Y-m-d', $col1value);
+			}
+			$content .= "<tr><th>{$col1value}</th>";
 			foreach ($colors as $color) {
 			    if ($color != 'total') {
 				$color = util::colorToHex($color['color_r'], $color['color_g'], $color['color_b']);
@@ -249,9 +256,10 @@ extends Controller
 			$content .= " </tr>";
 		    }
 		}
+		$content .= "</table>";
 	    }
 
-	    if ($show_hour_summary) {
+	    if ($show_total_hour_summary) {
 		$content .= "<table class='report_timetable'>";
 		$content .= "<tr><th>Tags</th><th></th><th>Minutes</th></tr>";
 		foreach ($sums['total'] as $color => $sum) {
