@@ -45,7 +45,6 @@ extends Controller
         $now_link = makeUrl(array('date'=>$now));
         $content .= "<p><a href='$prev_link'>«earlier</a> <a href='$now_link'>today</a>  <a href='$next_link'>later»</a></p>";
 
-
         $form = "";
 	$hidden = array('controller' => 'report');
 	if (param('date')) $hidden['date']  = param('date');
@@ -65,12 +64,25 @@ extends Controller
 
 	$form .= "</tr></table>";
 
-	$content .= form::makeForm($form, $hidden, 'get');
 	
-	$content .= "<div class='figure'><img src='" . makeUrl(array_merge($_GET, array('controller'=>'graph', 'width' => '1024', 'height' => '480'))) . "' /></div>";
-        
+	$form .= "<h2>Include</h2>";
+	
+	$show_graph = isset($_GET['show_graph']) ? $_GET['show_graph'] == 't' : true;
+	$show_hour_list = isset($_GET['show_hour_list']) ? $_GET['show_hour_list'] == 't' : true;
+	$show_hour_summary_per_user = isset($_GET['show_hour_summary_per_user']) ? $_GET['show_hour_summary_per_user'] == 't' : true;
+	$show_hour_summary = isset($_GET['show_hour_summary']) ? $_GET['show_hour_summary'] == 't' : true;
+
+	$form .= form::makeCheckbox('show_graph', $show_graph, "Graph", null, null, array('onchange'=>'submit();'));
+	$form .= form::makeCheckbox('show_hour_list', $show_hour_list, "Hour list", null, null, array('onchange'=>'submit();'));
+	$form .= form::makeCheckbox('show_hour_summary_per_user', $show_hour_summary_per_user, "Hour summary per user", null, null, array('onchange'=>'submit();'));
+	$form .= form::makeCheckbox('show_hour_summary', $show_hour_summary, "Total hour summary", null, null, array('onchange'=>'submit();'));
+
+	$content .= form::makeForm($form, $hidden, 'get');
 
 
+	if ($show_graph) {
+	    $content .= "<div class='figure'><img src='" . makeUrl(array_merge($_GET, array('controller'=>'graph', 'width' => '1024', 'height' => '480'))) . "' /></div>";
+        }
 
         $date_end = date('Y-m-d',Entry::getBaseDate());
         $date_begin = date('Y-m-d',Entry::getBaseDate()-(Entry::getDateCount()-1)*3600*24);
@@ -103,28 +115,85 @@ extends Controller
 	    $idx++;
 	}
         
-	$content .= "<table class='report_timetable'><tr><th>Date</th><th></th><th>Minutes</th><th>User</th><th>Project</th><th>Tags</th><th>Description</th></tr>";
-	$sums = array();
+	/* Sum stuff up */
+	$sums = array('total' => array('total' => 0));
 	foreach ($hours_by_date as $date => $hours) {
-	    $date = date('Y-m-d', $date);
 	    foreach ($hours as $hour) {
+	        $usr = $hour['user_fullname'];
 	        $color = util::colorToHex($hour['color_r'], $hour['color_g'], $hour['color_b']);
-		if (!isset($sums[$color])) $sums[$color] = 0;
-		$sums[$color] += $hour['minutes'];
-	        $content .= "<tr><th>{$date}</th><td style='background: {$color}'>&nbsp;</td><td>{$hour['minutes']}</td><td>{$hour['user_fullname']}</td><td>{$hour['project']}</td><td>{$hour['tag_names']}</td><td>{$hour['description']}</td></tr>";
-		$date = '';
+		if (!isset($sums[$usr])) $sums[$usr] = array('total' => 0);
+		if (!isset($sums[$usr][$color])) $sums[$usr][$color] = 0;
+		if (!isset($sums['total'][$color])) $sums['total'][$color] = 0;
+		$sums[$usr][$color] += $hour['minutes'];
+		$sums[$usr]['total'] += $hour['minutes'];
+		$sums['total'][$color] += $hour['minutes'];
+		$sums['total']['total'] += $hour['minutes'];
 	    }
         }
-	$content .= "<tr><th colspan='7'>Sum</th></tr>";
-	$total_sum = 0;
-	foreach ($sums as $color => $sum) {
-	    $total_sum += $sum;
-	    $tags = $idx_to_tag_names[$color_to_idx[$color]];
-	    $content .= "<tr><th>{$tags}</th><td style='background: {$color}'>&nbsp;</td><td>{$sum}</td><td></td><td></td><td></td><td></td></tr>";
-	}
-        $content .= "<tr><th>Total</th><td></td><td>{$total_sum}</td><td></td><td></td><td></td><td></td></tr>";
 
-        $content .= "</table>";
+	if ($show_hour_list) {
+	    $content .= "<table class='report_timetable'><tr><th>Date</th><th></th><th>Minutes</th><th>User</th><th>Project</th><th>Tags</th><th>Description</th></tr>";
+	    foreach ($hours_by_date as $date => $hours) {
+		$date = date('Y-m-d', $date);
+		foreach ($hours as $hour) {
+		    $color = util::colorToHex($hour['color_r'], $hour['color_g'], $hour['color_b']);
+		    $content .= "<tr><th>{$date}</th><td style='background: {$color}'>&nbsp;</td><td>{$hour['minutes']}</td><td>{$hour['user_fullname']}</td><td>{$hour['project']}</td><td>{$hour['tag_names']}</td><td>{$hour['description']}</td></tr>";
+		    $date = '';
+		}
+	    }
+	    $content .= "</table>";
+	}
+
+	if ($show_hour_summary_per_user) {
+	    $content .= "<table class='report_timetable'>";
+	    $content .= " <tr>";
+	    $content .= "  <th>User</th>";
+	    foreach ($colors as $color) {
+		$content .= "<th>{$color['tag_names']}</th>";
+	    }
+	    $content .= "  <th>Total</th>";
+	    $content .= " </tr>";
+	    $content .= " <tr>";
+	    $content .= "  <th></th>";
+	    foreach ($colors as $color) {
+		$color = util::colorToHex($color['color_r'], $color['color_g'], $color['color_b']);
+		$content .= "<td style='background: {$color}'>&nbsp;</td>";
+	    }
+	    $content .= "  <td></td>";
+	    $content .= " </tr>";
+
+	    foreach ($sums as $usr => $color_sums) {
+		if ($usr != 'total') {
+		    $content .= "<tr><th>{$usr}</th>";
+		    foreach ($colors as $color) {
+			if ($color != 'total') {
+			    $color = util::colorToHex($color['color_r'], $color['color_g'], $color['color_b']);
+			    if (isset($color_sums[$color])) {
+				$content .= "<td>{$color_sums[$color]}</td>";
+			    } else {
+				$content .= "<td></td>";
+			    }
+			}
+		    }
+		    $content .= "<td>{$color_sums['total']}</td>";
+		    $content .= " </tr>";
+		}
+	    }
+	}
+
+	if ($show_hour_summary) {
+	    $content .= "<table class='report_timetable'>";
+	    $content .= "<tr><th>Tags</th><th></th><th>Minutes</th></tr>";
+	    foreach ($sums['total'] as $color => $sum) {
+		if ($color != 'total') {
+		    $tags = $idx_to_tag_names[$color_to_idx[$color]];
+		    $content .= "<tr><th>{$tags}</th><td style='background: {$color}'>&nbsp;</td><td>{$sum}</td>";
+		}
+	    }
+	    $content .= "<tr><th>Total</th><td></td><td>{$sums['total']['total']}</td>";
+
+	    $content .= "</table>";
+	}
 
         $this->show(null, $content);
 
