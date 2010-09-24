@@ -16,6 +16,8 @@ extends Controller
 	foreach (param('users',array()) as $usr) {
 	    $user_ids[] = $all[$usr]->id;
 	}
+
+    	$hour_list_order = isset($_GET['hour_list_order']) ? explode(',', $_GET['hour_list_order']) : array('perform_date','user_fullname','project','tag_names');
 	
 	$filter = array(
 	 'date_begin' => $date_begin,
@@ -25,8 +27,8 @@ extends Controller
 	 'users' => $user_ids
 	);
         $colors = Entry::colors($filter);
-	$hours_by_date = Entry::groupByColor($filter);
-	
+	$hours_by_date = Entry::groupByColor($filter, $hour_list_order);
+
 	$color_to_idx = array();
 	$idx_to_color = array();
 	$idx_to_tag_names = array();
@@ -40,7 +42,11 @@ extends Controller
 
         $h = new Graph('png');
 
-        $h->setXAxisType(GRAPH_DATE, 'd-m');
+	if ($hour_list_order[0] == 'perform_date') {
+          $h->setXAxisType(GRAPH_DATE, 'd-m');
+        } else {
+	  $h->setXAxisType(GRAPH_REGULAR, 'd-m');
+        }
 	$h->setParams(array("color_map"=>$idx_to_color));
 
 	foreach ($hours_by_date as $date => $hours) {

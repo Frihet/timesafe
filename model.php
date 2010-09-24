@@ -281,12 +281,12 @@ order by perform_date", array(':user_id'=>User::$user->id,
 	 $sql[1]);
     }
 
-    function sqlGroupByColor($filter) {
-        $sql = self::sqlColoredEntries($filter, array('perform_date'));
+    function sqlGroupByColor($filter, $order) {
+        $sql = self::sqlColoredEntries($filter, $order);
 
         return array(
          "select
-	   perform_date,
+	   {$order[0]},
 	   sum(minutes) as minutes,
            color_r,
 	   color_g,
@@ -295,13 +295,13 @@ order by perform_date", array(':user_id'=>User::$user->id,
 	  from
 	   ({$sql[0]}) as s
           group by
-	   perform_date,
+	   {$order[0]},
            color_r,
 	   color_g,
 	   color_b,
 	   tag_names
 	  order by
-	   perform_date;",
+	   {$order[0]};",
 	 $sql[1]);
     }
 
@@ -333,9 +333,9 @@ order by perform_date", array(':user_id'=>User::$user->id,
 	return $items_by_col;
     }
 
-    function groupByColor($filter) {
-    	$sql = self::sqlGroupByColor($filter);
-        return self::groupByColumn(db::fetchList($sql[0], $sql[1]), "perform_date");
+    function groupByColor($filter, $order = array('perform_date')) {
+    	$sql = self::sqlGroupByColor($filter, $order);
+        return self::groupByColumn(db::fetchList($sql[0], $sql[1]), $order[0]);
     }
     
 }
