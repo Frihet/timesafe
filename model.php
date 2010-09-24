@@ -167,11 +167,16 @@ order by perform_date", array(':user_id'=>User::$user->id,
         
     }
 
+    /* reporting functions of various kinds */
+
     function sqlColoredTags() {
         return array(
          "select
 	   et.entry_id,
-	   t.*
+	   t.color_r,
+	   t.color_g,
+	   t.color_b,
+	   t.name
 	  from
 	   tr_tag_map et
 	   join tr_tag t on
@@ -182,8 +187,34 @@ order by perform_date", array(':user_id'=>User::$user->id,
 	 array());
     }
 
+    function sqlColoredClasses() {
+        return array(
+         "select
+	   e.id as entry_id,
+	   c.color_r,
+	   c.color_g,
+	   c.color_b,
+	   c.name
+	  from
+	   tr_entry e
+	   join tr_project_project_class ec on
+	    e.project_id = ec.project_id
+	   join tr_project_class c on
+	    ec.project_class_id = c.id
+	    and c.color_r is not null
+	    and c.color_g is not null
+	    and c.color_b is not null",
+	 array());
+    }
+
+    function sqlColoredMarks() {
+        $sql1 = self::sqlColoredTags();
+        $sql2 = self::sqlColoredClasses();
+        return array("{$sql1[0]} union {$sql2[0]}", array_merge($sql1[1], $sql2[1]));
+    }
+
     function sqlColoredEntries($filter, $order) {
-        $sql = self::sqlColoredTags();
+        $sql = self::sqlColoredMarks();
 	$user_sql = util::arrayToSqlIn("e.user_id", isset($filter['users']) ? $filter['users'] : array());
 	$project_sql = util::arrayToSqlIn("p.name", isset($filter['projects']) ? $filter['projects'] : array());
 
@@ -316,6 +347,10 @@ extends DbItem
 
     var $id;
     var $name;
+    var $color;
+    var $color_r;
+    var $color_g;
+    var $color_b;
     var $deleted;
     
     static $_project_class_cache;
@@ -331,6 +366,26 @@ extends DbItem
             else if (is_array($param)) {
                 $this->initFromArray($param);
             }
+        }
+    }
+
+    function getPublicProperties() {
+        static $cache = null;
+        if (is_null( $cache )) {
+            $cache = array();
+            foreach (get_class_vars( get_class( $this ) ) as $key=>$val) {
+                if (substr( $key, 0, 1 ) != '_' && $key != "color") {
+                    $cache[] = $key;
+                }
+            }
+        }
+        return $cache;
+    }
+
+    function initFromArray($arr) {
+    	parent::initFromArray($arr);
+	if ($this->color_r !== null && $this->color_g !== null && $this->color_b !== null) {
+	   $this->color = util::colorToHex($this->color_r, $this->color_g, $this->color_b);
         }
     }
 
@@ -359,7 +414,7 @@ extends DbItem
         
 
         $data = db::fetchList("
-select id, name, deleted
+select id, name, color_r, color_g, color_b, deleted
 from tr_project_class
 where deleted=false
 order by name");
@@ -375,6 +430,19 @@ order by name");
         self::$_project_class_cache = $out;
         
         return $out;   
+    }
+
+    function save()
+    {
+        $this->color_r = null;
+        $this->color_g = null;
+        $this->color_b = null;
+	if (preg_match('/^#[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]$/', $this->color) > 0) {
+            $this->color_r = hexdec(substr($this->color, 1, 2));
+            $this->color_g = hexdec(substr($this->color, 3, 2));
+            $this->color_b = hexdec(substr($this->color, 5, 2));
+	}
+        return $this->saveInternal();
     }
     
 }

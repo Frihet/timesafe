@@ -50,6 +50,9 @@ create table tr_project_class
 (
 	id serial not null primary key,
 	name varchar(64) not null,
+	color_r int,
+	color_g int,
+	color_b int,
 	deleted boolean not null default false
 );
 

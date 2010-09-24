@@ -21,6 +21,7 @@ extends Controller
         $form .= "<table class='striped'>";
         $form .= "<tr>";
         $form .= "<th>Name</th>";
+	$form .= "<th>Color</th>";
         $form .= "<th></th>";
         $form .= "</tr>";
         $idx = 0;
@@ -32,6 +33,7 @@ extends Controller
             if($project_class->id !== null)
                 $hidden["project_class[$idx][id]"] = $project_class->id;
             $form .= "<td>".form::makeText("project_class[$idx][name]",$project_class->name)."</td>";
+	    $form .= "<td>".form::makeColorSelector("project_class[$idx][color]",$project_class->color, null)."</td>";
             $remove_name = htmlEncode("project_class[$idx][remove]");
             $form .= "<td><button type='submit' name='$remove_name' value='1'>Remove</button></td>";
             $form .= "</tr>";
