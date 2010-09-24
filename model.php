@@ -244,7 +244,7 @@ order by perform_date", array(':user_id'=>User::$user->id,
             e.user_id = u.id
 	   join tr_project p on
             e.project_id = p.id
-	   left outer join ({$sql[0]}) t on
+	   left outer join (select * from ({$sql[0]}) t order by t.entry_id, t.name) t on -- See note on ordering and array_agg at http://www.postgresql.org/docs/8.4/static/functions-aggregate.html 
 	    e.id = t.entry_id
 	  where
 	   perform_date <= :date_end 
