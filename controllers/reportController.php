@@ -62,9 +62,7 @@ extends Controller
 	    $title = isset($_GET['title_'.$report]) ? $_GET['title_'.$report] : "";
 	    $cls = isset($_GET['cls_'.$report]) ? $_GET['cls_'.$report] : "";
 
-	    $show_graph = isset($_GET['show_graph_'.$report]) ? $_GET['show_graph_'.$report] == 't' : true;
-	    $show_hour_list = isset($_GET['show_hour_list_'.$report]) ? $_GET['show_hour_list_'.$report] == 't' : true;
-	    $show_hour_summary = isset($_GET['show_hour_summary_'.$report]) ? $_GET['show_hour_summary_'.$report] == 't' : true;
+	    $type = isset($_GET['type_'.$report]) ? $_GET['type_'.$report] : 'graph';
 
 	    $hour_list_order = isset($_GET['hour_list_order_'.$report]) ? explode(',', $_GET['hour_list_order_'.$report]) : array('perform_date','user_fullname','project','tag_names');
 	    $hidden['hour_list_order_'.$report] = implode(',', $hour_list_order);
@@ -95,9 +93,7 @@ extends Controller
 
 	    $form .= "</tr></table>";
 
-	    $form .= form::makeCheckbox('show_graph_'.$report, $show_graph, "Graph", null, null, array('onchange'=>'submit();'));
-	    $form .= form::makeCheckbox('show_hour_list_'.$report, $show_hour_list, "Hour list", null, null, array('onchange'=>'submit();'));
-	    $form .= form::makeCheckbox('show_hour_summary_'.$report, $show_hour_summary, "Hour summary", null, null, array('onchange'=>'submit();'));
+	    $form .= "Show as " . form::makeSelect('type_'.$report, array('graph' => 'Graph', 'list' => 'Hour list', 'sum' => 'Hour summary'), $type, null, array('onchange'=>'submit();'));
 
 	    $form .= "</div>";
 	}
@@ -111,9 +107,7 @@ extends Controller
 	    $users = isset($_GET['users_'.$report]) ? $_GET['users_'.$report] : array();
 	    $tags = isset($_GET['tags_'.$report]) ? $_GET['tags_'.$report] : array();
 	    $projects = isset($_GET['projects_'.$report]) ? $_GET['projects_'.$report] : array();
-	    $show_graph = isset($_GET['show_graph_'.$report]) ? $_GET['show_graph_'.$report] == 't' : true;
-	    $show_hour_list = isset($_GET['show_hour_list_'.$report]) ? $_GET['show_hour_list_'.$report] == 't' : true;
-	    $show_hour_summary = isset($_GET['show_hour_summary_'.$report]) ? $_GET['show_hour_summary_'.$report] == 't' : true;
+	    $type = isset($_GET['type_'.$report]) ? $_GET['type_'.$report] : 'graph';
 
 	    $hour_list_order = isset($_GET['hour_list_order_'.$report]) ? explode(',', $_GET['hour_list_order_'.$report]) : array('perform_date','user_fullname','project','tag_names');
 
@@ -176,7 +170,7 @@ extends Controller
 	        $content .= "<h1>{$title}</h1>";
 	    }
 
-	    if ($show_graph) {
+	    if ($type == 'graph') {
 	        $params = array('controller'=>'graph', 'width' => '1024', 'height' => '480', 'date' => param('date'));
 		foreach ($_GET as $name => $value) {
 		    if (util::ends_with($name, "_{$report}")) {
@@ -187,7 +181,7 @@ extends Controller
 		$content .= "<img src='" . makeUrl($params) . "' />";
 	    }
 
-	    if ($show_hour_list) {
+	    if ($type == 'list') {
 	        $columns = array_merge($hour_list_columns);
                 $ordered_columns = array();
 		foreach ($hour_list_order as $col) {
@@ -228,7 +222,7 @@ extends Controller
 		$content .= "</table>";
 	    }
 
-	    if ($show_hour_summary) {
+	    if ($type == 'sum') {
 	        $col1 = $hour_list_order[0];
 	        $title1 = $hour_list_columns[$col1];
 	        $col2 = $hour_list_order[1];
