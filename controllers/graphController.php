@@ -17,7 +17,7 @@ extends Controller
 	    $user_ids[] = $all[$usr]->id;
 	}
 
-    	$hour_list_order = isset($_GET['hour_list_order']) ? explode(',', $_GET['hour_list_order']) : array('perform_date','user_fullname','project','tag_names');
+    	$hour_list_order = isset($_GET['order']) ? explode(',', $_GET['order']) : array('perform_date','user_fullname','project','tag_names');
 	
 	$filter = array(
 	 'date_begin' => $date_begin,

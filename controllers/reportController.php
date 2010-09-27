@@ -59,76 +59,81 @@ extends Controller
 	$all_projects = Project::getProjects();
 
 	for ($report = 0; $report < $reports; $report++) {
-	    $title = isset($_GET['title_'.$report]) ? $_GET['title_'.$report] : "";
-	    $cls = isset($_GET['cls_'.$report]) ? $_GET['cls_'.$report] : "";
-
-	    $type = isset($_GET['type_'.$report]) ? $_GET['type_'.$report] : 'graph';
-
-	    $hour_list_order = isset($_GET['hour_list_order_'.$report]) ? explode(',', $_GET['hour_list_order_'.$report]) : array('perform_date','user_fullname','project','tag_names');
-	    $hidden['hour_list_order_'.$report] = implode(',', $hour_list_order);
-
-	    $users = isset($_GET['users_'.$report]) ? $_GET['users_'.$report] : array();
-	    $tags = isset($_GET['tags_'.$report]) ? $_GET['tags_'.$report] : array();
-	    $projects = isset($_GET['projects_'.$report]) ? $_GET['projects_'.$report] : array();
-
+	    $report_data = isset($_GET['report']) && isset($_GET['report'][$report]) ? $_GET['report'][$report] : array();
+	    $report_data = array_merge(array(
+	      'title' => '',
+	      'cls' => '',
+	      'type' => 'graph',
+	      'order' => 'perform_date,user_fullname,project,tag_names',
+	      'users' => array(),
+	      'tags' => array(),
+	      'projects' => array(),
+	    ), $report_data);
+	    
+	    $hidden["report[{$report}][order]"] = $report_data['order'];
+	    $report_data['order'] = explode(',', $report_data['order']);
 
             $form .= "<div class='report_form_part'>";
-	    $form .= "Title: " . form::makeText('title_'.$report, $title, null, null, array('onchange'=>'submit();'));
-	    $form .= "Class: " . form::makeText('cls_'.$report, $cls, null, null, array('onchange'=>'submit();'));
+	    $form .= "Title: " . form::makeText("report[{$report}][title]", $report_data['title'], null, null, array('onchange'=>'submit();'));
+	    $form .= "Class: " . form::makeText("report[{$report}][cls]", $report_data['cls'], null, null, array('onchange'=>'submit();'));
 	    $form .= "<table>
 		       <tr><th>Users</th><th>Tags</th><th>Projects</th><th>Sort order</th></tr>
 		       <tr>";
 
-	    $form .= "<td>" . form::makeSelect('users_'.$report, form::makeSelectList($all_users, 'name', 'fullname'), $users, null, array('onchange'=>'submit();')) . "</td>";
-	    $form .= "<td>" . form::makeSelect('tags_'.$report, form::makeSelectList($all_tags, 'name', 'name'), $tags, null, array('onchange'=>'submit();')) . "</td>";
-	    $form .= "<td>" . form::makeSelect('projects_'.$report, form::makeSelectList($all_projects, 'name', 'name'), $projects, null, array('onchange'=>'submit();')) . "</td>";
+	    $form .= "<td>" . form::makeSelect("report[{$report}][users]", form::makeSelectList($all_users, 'name', 'fullname'), $report_data['users'], null, array('onchange'=>'submit();')) . "</td>";
+	    $form .= "<td>" . form::makeSelect("report[{$report}][tags]", form::makeSelectList($all_tags, 'name', 'name'), $report_data['tags'], null, array('onchange'=>'submit();')) . "</td>";
+	    $form .= "<td>" . form::makeSelect("report[{$report}][projects]", form::makeSelectList($all_projects, 'name', 'name'), $report_data['projects'], null, array('onchange'=>'submit();')) . "</td>";
 
 	    $form .= '<td>';
-	    foreach ($hour_list_order as $item) {
-		$new_order = array_merge(array($item), array_diff($hour_list_order, array($item)));
-		$params = array_merge($_GET, array('hour_list_order_'.$report => implode(',',$new_order)));
+	    foreach ($report_data['order'] as $item) {
+		$new_order = array_merge(array($item), array_diff($report_data['order'], array($item)));
+		$params = array_merge($_GET);
+		$params['report'][$report]['order'] = implode(',',$new_order);
 		$form .= "<a href='" . makeUrl($params) . "' />{$hour_list_columns[$item]}</a><br>";
 	    }
 	    $form .= "</td>";
 
 	    $form .= "</tr></table>";
 
-	    $form .= "Show as " . form::makeSelect('type_'.$report, array('graph' => 'Graph', 'list' => 'Hour list', 'sum' => 'Hour summary'), $type, null, array('onchange'=>'submit();'));
+	    $form .= "Show as " . form::makeSelect("report[{$report}][type]", array('graph' => 'Graph', 'list' => 'Hour list', 'sum' => 'Hour summary'), $report_data['type'], null, array('onchange'=>'submit();'));
 
 	    $form .= "</div>";
 	}
         $content .= form::makeForm($form, $hidden, 'get');
 	$content .= "<div class='report_form_end'></div>";
 
+
+	$date_end = date('Y-m-d',Entry::getBaseDate());
+	$date_begin = date('Y-m-d',Entry::getBaseDate()-(Entry::getDateCount()-1)*3600*24);
+
 	for ($report = 0; $report < $reports; $report++) {
-	    $title = isset($_GET['title_'.$report]) ? $_GET['title_'.$report] : "";
-	    $cls = isset($_GET['cls_'.$report]) ? $_GET['cls_'.$report] : "";
-
-	    $users = isset($_GET['users_'.$report]) ? $_GET['users_'.$report] : array();
-	    $tags = isset($_GET['tags_'.$report]) ? $_GET['tags_'.$report] : array();
-	    $projects = isset($_GET['projects_'.$report]) ? $_GET['projects_'.$report] : array();
-	    $type = isset($_GET['type_'.$report]) ? $_GET['type_'.$report] : 'graph';
-
-	    $hour_list_order = isset($_GET['hour_list_order_'.$report]) ? explode(',', $_GET['hour_list_order_'.$report]) : array('perform_date','user_fullname','project','tag_names');
-
-	    $date_end = date('Y-m-d',Entry::getBaseDate());
-	    $date_begin = date('Y-m-d',Entry::getBaseDate()-(Entry::getDateCount()-1)*3600*24);
+	    $report_data = isset($_GET['report']) && isset($_GET['report'][$report]) ? $_GET['report'][$report] : array();
+	    $report_data = array_merge(array(
+	      'title' => '',
+	      'cls' => '',
+	      'type' => 'graph',
+	      'order' => 'perform_date,user_fullname,project,tag_names',
+	      'users' => array(),
+	      'tags' => array(),
+	      'projects' => array(),
+	    ), $report_data);
+	    $report_data['order'] = explode(',', $report_data['order']);
 
 	    $all = User::getAllUsers();
 	    $user_ids = array();
-	    foreach (param('users',array()) as $usr) {
+	    foreach ($report_data['users'] as $usr) {
 		$user_ids[] = $all[$usr]->id;
 	    }
 
 	    $filter = array(
 	     'date_begin' => $date_begin,
 	     'date_end' => $date_end,
-	     'projects' => isset($_GET['projects_'.$report]) ? $_GET['projects_'.$report] : array(),
-	     'tags' => isset($_GET['tags_'.$report]) ? $_GET['tags_'.$report] : array(),
+	     'projects' => $report_data['projects'],
+	     'tags' => $report_data['tags'],
 	     'users' => $user_ids
 	    );
 	    $colors = Entry::colors($filter);
-	    $hours_by_date = Entry::coloredEntries($filter, $hour_list_order);
+	    $hours_by_date = Entry::coloredEntries($filter, $report_data['order']);
 
 	    $color_to_idx = array();
 	    $idx_to_color = array();
@@ -144,8 +149,8 @@ extends Controller
 	    }
 
 	    /* Sum stuff up */
-	    $col1 = $hour_list_order[0];
-	    $col2 = $hour_list_order[1];
+	    $col1 = $report_data['order'][0];
+	    $col2 = $report_data['order'][1];
 	    $col1values = array();
 	    $col2values = array();
 	    $sums = array('total' => array('total' => 0));
@@ -165,26 +170,21 @@ extends Controller
 		}
 	    }
 
-	    $content .= "<div class='{$cls}'>";
-	    if ($title != "") {
-	        $content .= "<h1>{$title}</h1>";
+	    $content .= "<div class='{$report_data['cls']}'>";
+	    if ($report_data['title'] != "") {
+	        $content .= "<h1>{$report_data['title']}</h1>";
 	    }
 
-	    if ($type == 'graph') {
-	        $params = array('controller'=>'graph', 'width' => '1024', 'height' => '480', 'date' => param('date'));
-		foreach ($_GET as $name => $value) {
-		    if (util::ends_with($name, "_{$report}")) {
-		        $name = substr($name, 0, strlen($name)-strlen("_{$report}"));
-		        $params[$name] = $value;
-		    }
-		}
+	    if ($report_data['type'] == 'graph') {
+	        $params = array_merge($report_data, array('controller'=>'graph', 'width' => '1024', 'height' => '480', 'date' => param('date')));
+	        $params['order'] = implode(',', $params['order']);
 		$content .= "<img src='" . makeUrl($params) . "' />";
 	    }
 
-	    if ($type == 'list') {
+	    if ($report_data['type'] == 'list') {
 	        $columns = array_merge($hour_list_columns);
                 $ordered_columns = array();
-		foreach ($hour_list_order as $col) {
+		foreach ($report_data['order'] as $col) {
 		    $ordered_columns[$col] = $columns[$col];
 		    unset($columns[$col]);
 		}
@@ -222,10 +222,10 @@ extends Controller
 		$content .= "</table>";
 	    }
 
-	    if ($type == 'sum') {
-	        $col1 = $hour_list_order[0];
+	    if ($report_data['type'] == 'sum') {
+	        $col1 = $report_data['order'][0];
 	        $title1 = $hour_list_columns[$col1];
-	        $col2 = $hour_list_order[1];
+	        $col2 = $report_data['order'][1];
 	        $title2 = $hour_list_columns[$col2];
 
 		$content .= "<table class='report_timetable'>";
