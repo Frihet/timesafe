@@ -26,8 +26,9 @@ extends Controller
 	 'tags' => isset($_GET['tags']) ? $_GET['tags'] : array(),
 	 'users' => $user_ids
 	);
-        $colors = Entry::colors($filter, $hour_list_order);
-	$hours_by_date = Entry::groupByColor($filter, $hour_list_order);
+	$mark_types = isset($_GET['mark_types']) ? $_GET['mark_types'] : 'both';
+        $colors = Entry::colors($filter, $hour_list_order, $mark_types);
+	$hours_by_date = Entry::groupByColor($filter, $hour_list_order, $mark_types);
 
 	$color_to_idx = array();
 	$idx_to_color = array();

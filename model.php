@@ -207,14 +207,19 @@ order by perform_date", array(':user_id'=>User::$user->id,
 	 array());
     }
 
-    function sqlColoredMarks() {
+    function sqlColoredMarks($mark_types = 'both') {
+        if ($mark_types == 'tags')
+	    return self::sqlColoredTags();
+        else if ($mark_types == 'classes')
+	    return self::sqlColoredClasses();
+
         $sql1 = self::sqlColoredTags();
         $sql2 = self::sqlColoredClasses();
         return array("{$sql1[0]} union {$sql2[0]}", array_merge($sql1[1], $sql2[1]));
     }
 
-    function sqlColoredEntries($filter, $order) {
-        $sql = self::sqlColoredMarks();
+    function sqlColoredEntries($filter, $order, $mark_types = 'both') {
+        $sql = self::sqlColoredMarks($mark_types);
 	$user_sql = util::arrayToSqlIn("e.user_id", isset($filter['users']) ? $filter['users'] : array());
 	$project_sql = util::arrayToSqlIn("p.name", isset($filter['projects']) ? $filter['projects'] : array());
 
@@ -261,8 +266,8 @@ order by perform_date", array(':user_id'=>User::$user->id,
 	        ':date_begin'=>$filter['date_begin'])));
     }
 
-    function sqlCol2($filter = array(), $order) {
-        $sql = self::sqlColoredEntries($filter, array('perform_date'));
+    function sqlCol2($filter = array(), $order, $mark_types = 'both') {
+        $sql = self::sqlColoredEntries($filter, array('perform_date'), $mark_types);
 
 	$col2 = $order[1];
 
@@ -282,8 +287,8 @@ order by perform_date", array(':user_id'=>User::$user->id,
 	 $sql[1]);
     }
 
-    function sqlGroupByTwoCols($filter, $order) {
-        $sql = self::sqlColoredEntries($filter, $order);
+    function sqlGroupByTwoCols($filter, $order, $mark_types = 'both') {
+        $sql = self::sqlColoredEntries($filter, $order, $mark_types);
 	$col1 = $order[0];
 	$col2 = $order[1];
 
@@ -325,8 +330,8 @@ order by perform_date", array(':user_id'=>User::$user->id,
 	return $items_by_col;
     }
 
-    function colors($filter, $order = array('perform_date', 'tag_names')) {
-        $sql = self::sqlCol2($filter, $order);
+    function colors($filter, $order = array('perform_date', 'tag_names'), $mark_types = 'both') {
+        $sql = self::sqlCol2($filter, $order, $mark_types);
         $rows = db::fetchList($sql[0], $sql[1]);
 	if ($order[1] != 'tag_names') {
 	  /* We have no colors, so invent some; we spread the colors assigned evenly over the three dimensioned color space {r,g,b}. */
@@ -354,13 +359,13 @@ order by perform_date", array(':user_id'=>User::$user->id,
 	return $colors;
     }
 
-    function coloredEntries($filter, $order = array('perform_date', 'tag_names')) {
-        $sql = self::sqlColoredEntries($filter, $order);
+    function coloredEntries($filter, $order = array('perform_date', 'tag_names'), $mark_types = 'both') {
+        $sql = self::sqlColoredEntries($filter, $order, $mark_types);
         return self::groupByColumn(db::fetchList($sql[0], $sql[1]), $order[0]);
     }
 
-    function groupByColor($filter, $order = array('perform_date', 'tag_names')) {
-    	$sql = self::sqlGroupByTwoCols($filter, $order);
+    function groupByColor($filter, $order = array('perform_date', 'tag_names'), $mark_types = 'both') {
+    	$sql = self::sqlGroupByTwoCols($filter, $order, $mark_types);
         $rows = self::groupByColumn(db::fetchList($sql[0], $sql[1]), $order[0]);
 	if ($order[1] != 'tag_names') {
 	  $colors = self::colors($filter, $order);

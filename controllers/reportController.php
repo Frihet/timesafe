@@ -44,7 +44,7 @@ extends Controller
         $next_link = makeUrl(array('date'=>$next));
         $now_link = makeUrl(array('date'=>$now));
 
-	$hour_list_columns = array('perform_date' => 'Date', 'minutes' => 'Minutes', 'user_fullname' => 'User', 'project' => 'Project', 'tag_names' => 'Tags', 'description' => 'Description');
+	$hour_list_columns = array('perform_date' => 'Date', 'minutes' => 'Minutes', 'user_fullname' => 'User', 'project' => 'Project', 'tag_names' => 'Marks', 'description' => 'Description');
 
         $form = "";
 	$reports = isset($_GET['reports']) ? intval($_GET['reports']) : 1;
@@ -54,7 +54,7 @@ extends Controller
         $form .= "<p><a href='$prev_link'>«earlier</a> <a href='$now_link'>today</a>  <a href='$next_link'>later»</a></p>";
 	
 	$params = array_merge($_GET);
-	$params['reports'] = $params['reports'] + 1;
+	$params['reports'] = $reports + 1;
 	$form .= "<a href='" . makeUrl($params) . "' />Add another report item</a><br>";
 
 	$all_users = User::getAllUsers();
@@ -71,6 +71,7 @@ extends Controller
 	      'users' => array(),
 	      'tags' => array(),
 	      'projects' => array(),
+	      'mark_types' => 'both'
 	    ), $report_data);
 	    
 	    $hidden["report[{$report}][order]"] = $report_data['order'];
@@ -84,7 +85,7 @@ extends Controller
 		$params = array_merge($_GET);
 		if (!isset($params['report'])) $params['report'] = array();
 		if (!isset($params['report'][$report])) $params['report'][$report] = array();
-		if (!isset($params['report'][$report+1])) $params['report'][$report+1] = array();
+		if (!isset($params['report'][$report-1])) $params['report'][$report-1] = array();
 
 		$temp = $params['report'][$report];
 		$params['report'][$report] = $params['report'][$report-1];
@@ -98,7 +99,7 @@ extends Controller
 	    $params = array_merge($_GET);
 	    unset($params['report'][$report]);
 	    $params['report'] = isset($params['report']) ? array_values($params['report']) : array();
-	    $params['reports'] = $params['reports'] - 1;
+	    $params['reports'] = $reports - 1;
 	    $form .= "<a href='" . makeUrl($params) . "' />X</a> ";
 
 	    /* Shift right */
@@ -140,6 +141,8 @@ extends Controller
 
 	    $form .= "Show as " . form::makeSelect("report[{$report}][type]", array('graph' => 'Graph', 'list' => 'Hour list', 'sum' => 'Hour summary'), $report_data['type'], null, array('onchange'=>'submit();'));
 
+	    $form .= " Mark types: " . form::makeSelect("report[{$report}][mark_types]", array('both' => 'Both', 'tags' => 'Tags', 'classes' => 'Project classes'), $report_data['mark_types'], null, array('onchange'=>'submit();'));
+
 	    $form .= "</div>";
 	}
         $content .= form::makeForm($form, $hidden, 'get');
@@ -159,6 +162,7 @@ extends Controller
 	      'users' => array(),
 	      'tags' => array(),
 	      'projects' => array(),
+	      'mark_types' => 'both'
 	    ), $report_data);
 	    $report_data['order'] = explode(',', $report_data['order']);
 
@@ -175,20 +179,33 @@ extends Controller
 	     'tags' => $report_data['tags'],
 	     'users' => $user_ids
 	    );
-	    $colors = Entry::colors($filter);
-	    $hours_by_date = Entry::coloredEntries($filter, $report_data['order']);
+	    $hours_by_date = Entry::coloredEntries($filter, $report_data['order'], $report_data['mark_types']);
 
-	    $color_to_idx = array();
-	    $idx_to_color = array();
-	    $idx_to_tag_names = array();
-	    $idx = 0;
-	    foreach ($colors as $color) {
-		$idx_to_color[$idx] = array($color['color_r'], $color['color_g'], $color['color_b']);
-		$idx_to_tag_names[$idx] = $color['tag_names'];
-		$tag_names_to_idx[$color['tag_names']] = $idx;
-		$colorname = util::colorToHex($color['color_r'], $color['color_g'], $color['color_b']);
-		$color_to_idx[$colorname] = $idx;
-		$idx++;
+	    $col1 = $report_data['order'][0];
+	    $title1 = $hour_list_columns[$col1];
+	    $col2 = $report_data['order'][1];
+	    $title2 = $hour_list_columns[$col2];
+
+	    if ($col1 == 'tag_names' || $col2 == 'tag_names') {
+		$order = $report_data['order'];
+	        if ($col1 == 'tag_names') {
+		    $tmp = $order[0];
+		    $order[0] = $order[1];
+		    $order[1] = $tmp;
+		}
+		$colors = Entry::colors($filter, $order, $report_data['mark_types']);
+		$color_to_idx = array();
+		$idx_to_color = array();
+		$idx_to_tag_names = array();
+		$idx = 0;
+		foreach ($colors as $color) {
+		    $idx_to_color[$idx] = array($color['color_r'], $color['color_g'], $color['color_b']);
+		    $idx_to_tag_names[$idx] = $color['tag_names'];
+		    $tag_names_to_idx[$color['tag_names']] = $idx;
+		    $colorname = util::colorToHex($color['color_r'], $color['color_g'], $color['color_b']);
+		    $color_to_idx[$colorname] = $idx;
+		    $idx++;
+		}
 	    }
 
 	    /* Sum stuff up */
@@ -266,11 +283,6 @@ extends Controller
 	    }
 
 	    if ($report_data['type'] == 'sum') {
-	        $col1 = $report_data['order'][0];
-	        $title1 = $hour_list_columns[$col1];
-	        $col2 = $report_data['order'][1];
-	        $title2 = $hour_list_columns[$col2];
-
 		$content .= "<table class='report_timetable'>";
 		$content .= " <tr>";
 		$content .= "  <th>{$title1}</th>";
