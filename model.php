@@ -261,58 +261,50 @@ order by perform_date", array(':user_id'=>User::$user->id,
 	        ':date_begin'=>$filter['date_begin'])));
     }
 
-    function sqlColors($filter = array()) {
+    function sqlCol2($filter = array(), $order) {
         $sql = self::sqlColoredEntries($filter, array('perform_date'));
 
-        return array(
-         "select
-           color_r,
-	   color_g,
-	   color_b,
-	   max(tag_names) as tag_names
-	  from
-	   ({$sql[0]}) as s
-          group by
-           color_r,
-	   color_g,
-	   color_b
-	  order by
-	   tag_names;",
-	 $sql[1]);
-    }
+	$col2 = $order[1];
 
-    function sqlGroupByColor($filter, $order) {
-        $sql = self::sqlColoredEntries($filter, $order);
+	if ($col2 == 'tag_names') {
+	  $col2 .= ', color_r, color_g, color_b';
+	}
 
         return array(
          "select
-	   {$order[0]},
-	   sum(minutes) as minutes,
-           color_r,
-	   color_g,
-	   color_b,
-	   tag_names
+           {$col2}
 	  from
 	   ({$sql[0]}) as s
           group by
-	   {$order[0]},
-           color_r,
-	   color_g,
-	   color_b,
-	   tag_names
+	   {$col2}
 	  order by
-	   {$order[0]};",
+	   {$col2};",
 	 $sql[1]);
     }
 
-    function colors($filter) {
-        $sql = self::sqlColors($filter);
-        return db::fetchList($sql[0], $sql[1]);
-    }
-
-    function coloredEntries($filter, $order = array('perform_date')) {
+    function sqlGroupByTwoCols($filter, $order) {
         $sql = self::sqlColoredEntries($filter, $order);
-        return self::groupByColumn(db::fetchList($sql[0], $sql[1]), $order[0]);
+	$col1 = $order[0];
+	$col2 = $order[1];
+
+	if ($col2 == 'tag_names') {
+	  $col2 .= ', color_r, color_g, color_b';
+	}
+	
+        return array(
+         "select
+	   {$col1},
+           {$col2},
+	   sum(minutes) as minutes
+	  from
+	   ({$sql[0]}) as s
+          group by
+	   {$col1},
+	   {$col2}
+	  order by
+	   {$col1},
+	   {$col2};",
+	 $sql[1]);
     }
 
     function groupByColumn($items, $col) {
@@ -333,9 +325,54 @@ order by perform_date", array(':user_id'=>User::$user->id,
 	return $items_by_col;
     }
 
-    function groupByColor($filter, $order = array('perform_date')) {
-    	$sql = self::sqlGroupByColor($filter, $order);
+    function colors($filter, $order = array('perform_date', 'tag_names')) {
+        $sql = self::sqlCol2($filter, $order);
+        $rows = db::fetchList($sql[0], $sql[1]);
+	if ($order[1] != 'tag_names') {
+	  /* We have no colors, so invent some; we spread the colors assigned evenly over the three dimensioned color space {r,g,b}. */
+          $row_nr = count($rows);
+	  $rows_per_dimension = pow($row_nr, 1/3);
+	  $color_incr_per_row = max(array(1, 255 / $rows_per_dimension));
+	  $color = array('color_r' => 0, 'color_g' => 0, 'color_b' => 0);
+	  $colored_rows = array();
+	  foreach ($rows as $row) {
+	    $colored_rows[] = array_merge($row, $color);
+	    $color['color_r'] += $color_incr_per_row;
+	    if ($color['color_r'] > 255) {
+	      $color['color_r'] = 0; $color['color_g'] += $color_incr_per_row;
+	    }
+	    if ($color['color_g'] > 255) {
+	      $color['color_g'] = 0; $color['color_b'] += $color_incr_per_row;
+	    }
+	  }
+	  $rows = $colored_rows;
+	}
+	$colors = array();
+	foreach ($rows as $row) {
+	  $colors[$row[$order[1]]] = $row;
+	}
+	return $colors;
+    }
+
+    function coloredEntries($filter, $order = array('perform_date', 'tag_names')) {
+        $sql = self::sqlColoredEntries($filter, $order);
         return self::groupByColumn(db::fetchList($sql[0], $sql[1]), $order[0]);
+    }
+
+    function groupByColor($filter, $order = array('perform_date', 'tag_names')) {
+    	$sql = self::sqlGroupByTwoCols($filter, $order);
+        $rows = self::groupByColumn(db::fetchList($sql[0], $sql[1]), $order[0]);
+	if ($order[1] != 'tag_names') {
+	  $colors = self::colors($filter, $order);
+	  foreach ($rows as $col1value => $rows_for_col1) {
+	    $colored_rows = array();
+	    foreach ($rows_for_col1 as $row) {
+	      $colored_rows[] = array_merge($row, $colors[$row[$order[1]]]);
+	    }
+	    $rows[$col1value] = $colored_rows;
+	  }
+	}
+	return $rows;
     }
     
 }

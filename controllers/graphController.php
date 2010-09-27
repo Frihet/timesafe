@@ -26,16 +26,16 @@ extends Controller
 	 'tags' => isset($_GET['tags']) ? $_GET['tags'] : array(),
 	 'users' => $user_ids
 	);
-        $colors = Entry::colors($filter);
+        $colors = Entry::colors($filter, $hour_list_order);
 	$hours_by_date = Entry::groupByColor($filter, $hour_list_order);
 
 	$color_to_idx = array();
 	$idx_to_color = array();
-	$idx_to_tag_names = array();
+	$idx_to_col2 = array();
 	$idx = 0;
 	foreach ($colors as $color) {
 	    $idx_to_color[$idx] = array($color['color_r'], $color['color_g'], $color['color_b']);
-	    $idx_to_tag_names[$idx] = $color['tag_names'];
+	    $idx_to_col2[$idx] = $color[$hour_list_order[1]];
 	    $color_to_idx[util::colorToHex($color['color_r'], $color['color_g'], $color['color_b'])] = $idx;
 	    $idx++;
 	}
@@ -71,7 +71,7 @@ extends Controller
 	$h->setParams(array('width' => (int) param('width', 640),
                             'height' => (int) param('height', 240)));
 
-        $h->setLegend($idx_to_tag_names);
+        $h->setLegend($idx_to_col2);
 
 
 //        $h->addPlot(array(8,9,10));
