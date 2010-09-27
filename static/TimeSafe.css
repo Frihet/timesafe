@@ -260,6 +260,20 @@ ul.main_menu li a {
  border: 2px solid #888888;
 }
 
+.report_form_part_header {
+ background: #888888;
+ color: #ffffff;
+ margin-top: -10px;
+ margin-left: -10px;
+ margin-right: -10px;
+ margin-bottom: 10px;
+ text-align:right;
+}
+.report_form_part_header a {
+ color: #ffffff;
+ text-decoration: none;
+}
+
 .report_form_end {
  clear: both;
 }

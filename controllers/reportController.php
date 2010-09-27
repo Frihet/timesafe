@@ -52,7 +52,10 @@ extends Controller
 	if (param('date')) $hidden['date']  = param('date');
 
         $form .= "<p><a href='$prev_link'>«earlier</a> <a href='$now_link'>today</a>  <a href='$next_link'>later»</a></p>";
-	$form .= '<div>Number of reports: ' . form::makeText('reports', $reports, null, null, array('onchange'=>'submit();')) . "</div>";
+	
+	$params = array_merge($_GET);
+	$params['reports'] = $params['reports'] + 1;
+	$form .= "<a href='" . makeUrl($params) . "' />Add another report item</a><br>";
 
 	$all_users = User::getAllUsers();
 	$all_tags = Tag::fetch();
@@ -74,6 +77,46 @@ extends Controller
 	    $report_data['order'] = explode(',', $report_data['order']);
 
             $form .= "<div class='report_form_part'>";
+            $form .= " <div class='report_form_part_header'>";
+
+    	    /* Shift left */
+	    if ($report > 0) {
+		$params = array_merge($_GET);
+		if (!isset($params['report'])) $params['report'] = array();
+		if (!isset($params['report'][$report])) $params['report'][$report] = array();
+		if (!isset($params['report'][$report+1])) $params['report'][$report+1] = array();
+
+		$temp = $params['report'][$report];
+		$params['report'][$report] = $params['report'][$report-1];
+		$params['report'][$report-1] = $temp;
+
+		$params['report'] = isset($params['report']) ? array_values($params['report']) : array();
+		$form .= "<a href='" . makeUrl($params) . "' />&lt;&lt;</a> ";
+	    }
+
+	    /* Remove-link */
+	    $params = array_merge($_GET);
+	    unset($params['report'][$report]);
+	    $params['report'] = isset($params['report']) ? array_values($params['report']) : array();
+	    $params['reports'] = $params['reports'] - 1;
+	    $form .= "<a href='" . makeUrl($params) . "' />X</a> ";
+
+	    /* Shift right */
+	    if ($report < $reports - 1) {
+		$params = array_merge($_GET);
+		if (!isset($params['report'])) $params['report'] = array();
+		if (!isset($params['report'][$report])) $params['report'][$report] = array();
+		if (!isset($params['report'][$report+1])) $params['report'][$report+1] = array();
+
+		$temp = $params['report'][$report];
+		$params['report'][$report] = $params['report'][$report+1];
+		$params['report'][$report+1] = $temp;
+
+		$params['report'] = isset($params['report']) ? array_values($params['report']) : array();
+		$form .= "<a href='" . makeUrl($params) . "' />&gt;&gt;</a>";
+	    }
+	    $form .= " </div>";
+	    
 	    $form .= "Title: " . form::makeText("report[{$report}][title]", $report_data['title'], null, null, array('onchange'=>'submit();'));
 	    $form .= "Class: " . form::makeText("report[{$report}][cls]", $report_data['cls'], null, null, array('onchange'=>'submit();'));
 	    $form .= "<table>
