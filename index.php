@@ -35,7 +35,6 @@ if (isset($_SERVER['REMOTE_USER']) && !isset($_SESSION['user']) && !in_array(par
 	$usr = new User(array("name" => $my_name, "fullname" => $my_name, "password"=>"", "_projects" => array()));
 	$usr->save();
         $all = User::getAllUsers();
-print_r($all);
     }
     User::$me = $all[$my_name];
     User::$user = $all[param('user',$my_name)];
