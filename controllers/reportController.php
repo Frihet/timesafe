@@ -46,8 +46,36 @@ extends Controller
 
 	$hour_list_columns = array('perform_date' => 'Date', 'minutes' => 'Minutes', 'user_fullname' => 'User', 'project' => 'Project', 'tag_names' => 'Marks', 'description' => 'Description');
 
-        $form = "";
+
+
+	/* Manage saved reports */
+	$hidden = array('controller'=>'report','task'=>'saveReport', 'current_query' => makeUrl($_GET));
+	$form = "";
+	$form .= "<div class='report_manager'>";
+        $form .= " <table>";
+        $form .= "  <tr><th>Saved reports</th><th></th></tr>";
+        $idx = 0;
+        foreach(Report::fetch() as $report_manager) {
+            $form .= " <tr>";
+            if($report_manager->id !== null)
+                $hidden["report_manager[$idx][id]"] = $report_manager->id;
+            $form .= "  <td><a href='{$report_manager->query}'>{$report_manager->name}</td>";
+            $form .= "  <td><button type='submit' name='report_manager[{$idx}][remove]' value='1'>Remove</button></td>";
+            $form .= " </tr>";
+            $idx++;
+        }
+	$form .= "  <tr>";
+	$hidden["report_manager[$idx][query]"] = makeUrl($_GET);
+	$form .= "   <td>".form::makeText("report_manager[{$idx}][name]", "", null, null)."</td>";
+	$form .= "   <td><button type='submit' name='report_manager[{$idx}][add]' value='1'>Save</button></td>";
+	$form .= "  </tr>";
+        $form .= " </table>";
+	$form .= "</div>";
+	$content .= form::makeForm($form, $hidden);
+
+	/* Manage this report */
 	$reports = isset($_GET['reports']) ? intval($_GET['reports']) : 1;
+        $form = "";
 	$hidden = array('controller' => 'report', 'reports' => $reports);
 	if (param('date')) $hidden['date']  = param('date');
 
@@ -342,8 +370,23 @@ extends Controller
 
     }
     
-    
-      
+
+    function saveReportRun()
+    {
+        foreach(param('report_manager') as $report_manager){
+            if (isset($report_manager['remove']) && $report_manager['remove']==1) {
+                Report::delete($report_manager['id']);
+            } else if(isset($report_manager['add'])) {
+		unset($report_manager['add']);
+		$r = new Report();
+		//message("Input is " . sprint_r($report_manager));
+		$r->initFromArray($report_manager);
+		// message("Report_Manager is " . sprint_r($r));
+		$r->save();
+            }
+        }
+        util::redirect($_POST['current_query']);
+    }    
 }
 
 

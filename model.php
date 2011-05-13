@@ -968,3 +968,66 @@ extends DbItem
     
 }
 
+
+class Report
+extends DbItem
+{
+
+    var $id;
+    var $name;
+    var $query;
+
+    static $_report_cache;
+    
+    function __construct($param=null) 
+    {
+        $this->table = 'tr_report';
+        if($param) {
+            if ((int)$param == $param) {
+                $this->load($param);
+            }
+            else if (is_array($param)) {
+                $this->initFromArray($param);
+            }
+        }
+    }
+
+    function delete($id) 
+    {
+        db::query("delete from tr_report where id=:id", 
+                  array(':id'=>$id));
+    }    
+
+    function fetch() 
+    {
+        if (self::$_report_cache !== null) {
+            return self::$_report_cache;
+        }
+        
+
+        $data = db::fetchList("
+select * 
+from tr_report
+order by name");
+        
+        $out = array();
+        
+        foreach($data as $entry) {
+            $it = new Report();
+            $it->initFromArray($entry);
+            $out[$it->id] = $it;
+        }
+
+        self::$_report_cache = $out;
+        
+        return $out;
+        
+    }
+    
+    function save()
+    {
+        return $this->saveInternal();
+    }
+     
+    
+}

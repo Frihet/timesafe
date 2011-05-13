@@ -92,6 +92,13 @@ create table tr_project_project_class
 	project_class_id int not null references tr_project_class(id)
 );	
 
+create table tr_report
+(
+	id serial not null primary key,
+	name varchar(256) not null,
+	query varchar not null
+);
+
 insert into tr_user(name, password, fullname) values ('admin',md5('admin'),'Admin Adminsson');
 
 insert into tr_tag(name, color_r, color_g, color_b, visibility) values ('Billable',0,255,0,0);
