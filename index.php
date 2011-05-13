@@ -26,6 +26,21 @@ require_once('common/index.php');
 require_once("model.php");
 session_start();
 
+if (isset($_SERVER['REMOTE_USER']) && !isset($_SESSION['user']) && !in_array(param('controller'), array('login', 'help'))) {
+    $my_name = $_SERVER['REMOTE_USER'];
+    $_SESSION['user'] = $my_name;
+
+    $all = User::getAllUsers();
+    if (!array_key_exists($my_name, $all)) {
+	$usr = new User(array("name" => $my_name, "fullname" => $my_name, "password"=>"", "_projects" => array()));
+	$usr->save();
+        $all = User::getAllUsers();
+print_r($all);
+    }
+    User::$me = $all[$my_name];
+    User::$user = $all[param('user',$my_name)];
+}
+
 if (isset($_SESSION['user'])) {
     $all = User::getAllUsers();
     $my_name = $_SESSION['user'];
