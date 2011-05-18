@@ -1,3 +1,9 @@
 Dependencies:
 
 apt-get install apache2 php5-gd php5-pgsql postgresql postgresql-client
+
+First steps:
+
+git clone git://github.com/freecode/timesafe.git && \
+cd timesafe && \
+git clone git://github.com/freecode/fc-framework.git common
