@@ -1,3 +1,3 @@
 Dependencies:
 
-apt-get install php5-gd
+apt-get install apache2 php5-gd php5-pgsql postgresql postgresql-client
