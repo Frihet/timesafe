@@ -32,7 +32,8 @@ extends Controller
     {
         $users = User::getAllUsers();
 
-	if ($users[param('username')]->password == md5(param('password'))) {
+	// Support plain-text passwords even though _we_ never stores them - some integration script might...
+	if ($users[param('username')]->password == md5(param('password')) || $users[param('username')]->password == param('password')) {
 	    $_SESSION['user'] = param('username');
 	    util::redirect(makeUrl(array('controller'=>'editor','task'=>'view')));
 	}
