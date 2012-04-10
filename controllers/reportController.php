@@ -42,6 +42,12 @@ extends Controller
 	    );
 	    $hours_by_date = Entry::coloredEntries($filter, $report_data['order'], $report_data['mark_types']);
 
+	    foreach ($hours_by_date as &$hours) {
+		foreach ($hours as &$hour) {
+                    $hour['perform_date'] = date('Y-m-d', $hour['perform_date']);
+                }
+            }
+
 	    $col1 = $report_data['order'][0];
 	    $title1 = $this->hour_list_columns[$col1];
 	    $col2 = $report_data['order'][1];
@@ -92,6 +98,7 @@ extends Controller
 		    $sums['total']['total'] += $hour['hours'];
 		}
 	    }
+
             $res[] = array(
                 'report_data' => $report_data,
                 'idx_to_color' => $idx_to_color,
@@ -101,8 +108,8 @@ extends Controller
                 'col1' => $col1,
                 'col2' => $col2, 
                 'title1' => $title1,
-                'title2' => title2,
-                'col1values' => $col2values,
+                'title2' => $title2,
+                'col1values' => $col1values,
                 'col2values' => $col2values,
                 );
         }
@@ -121,7 +128,6 @@ extends Controller
         }
 
 	$reports = isset($_GET['reports']) ? intval($_GET['reports']) : 1;
-
 
 
 
@@ -334,9 +340,6 @@ extends Controller
 		    $content .= "  <th></th>";
 		}
 		foreach ($report['col2values'] as $col2value) {
-		    if ($report['col2'] == 'perform_date') {
-			$col2value = date('Y-m-d', $col2value);
-		    }
 		    $content .= "<th>{$col2value}</th>";
 		}
 		$content .= "  <th>Total</th>";
@@ -344,7 +347,7 @@ extends Controller
 		if ($report['col2'] == 'tag_names') {
 		    $content .= " <tr>";
 		    $content .= "  <th></th>";
-		    foreach ($col2values as $col2value) {
+		    foreach ($report['col2values'] as $col2value) {
 		        $color = $report['idx_to_color'][$report['tag_names_to_idx'][$col2value]];
 			$color = util::colorToHex($color[0], $color[1], $color[2]);
 			$content .= "<td style='background: {$color}; color: {$color}'>#</td>";
@@ -355,12 +358,9 @@ extends Controller
 
 		foreach ($report['sums'] as $col1value => $col2_sums) {
 		    if ($col1value != 'total') {
-		        if ($report['col1'] == 'perform_date') {
-			    $report['col1value'] = date('Y-m-d', $report['col1value']);
-			}
-			$content .= "<tr><th>{$col1value}</th>";
+			$content .= "<tr><th class='column_{$report['col1']}'>{$col1value}</th>";
 			if ($report['col1'] == 'tag_names') {
-			    $color = $report['idx_to_color'][$report['tag_names_to_idx'][$report['col1value']]];
+			    $color = $report['idx_to_color'][$report['tag_names_to_idx'][$col1value]];
 			    $color = util::colorToHex($color[0], $color[1], $color[2]);
 			    $content .= "<td style='background: {$color}; color: {$color}'>#</td>";
 			}
