@@ -78,7 +78,7 @@ extends Controller
 	    $hour_lengths = array_fill(0, count($idx_to_color), false);
 	    foreach ($hours as $hour) {
 	        $idx = $color_to_idx[util::colorToHex($hour['color_r'], $hour['color_g'], $hour['color_b'])];
-	        $hour_lengths[$idx] = $hour['minutes'] / 60.0;
+	        $hour_lengths[$idx] = $hour['hours'];
 	    }
 	    $h->addHistogramPoint($date, $hour_lengths);
 	}

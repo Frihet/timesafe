@@ -4,6 +4,9 @@
 
    MAking these simple forms is way more work than it should. More can be automated.
    */
+
+require_once("util.php");
+
 class AdminProjectController
 extends Controller
 {
@@ -44,7 +47,7 @@ extends Controller
             if($project->id !== null)
                 $hidden["project[$idx][id]"] = $project->id;
             $form .= "<td class='name'>".form::makeText("project[$idx][name]",$project->name)."</td>";
-            $form .= "<td class='start'>".form::makeText("project[$idx][start_date]", date("r", $project->start_date))."</td>";
+            $form .= "<td class='start'>".makeDateSelector("project[$idx][start_date]", formatDate($project->start_date))."</td>";
 
 	    foreach ($class_values as $class_id => $class_name) {
 	     $form .= "<td>" . form::makeListCheckbox("project[$idx][_project_class]", $class_id, in_array($class_id, $project->getProjectClass()), "", null) . "</td>";

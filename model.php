@@ -240,7 +240,7 @@ order by perform_date", array(':user_id'=>User::$user->id,
 	   p.name as project,
 	   e.description,
 	   extract(epoch from e.perform_date) as perform_date,
-	   e.minutes,
+	   trunc(e.minutes / 60.0, 1) as hours,
 	   avg(t.color_r) :: integer as color_r, avg(t.color_g) :: integer as color_g, avg(t.color_b) :: integer as color_b,
 	   array_agg(t.name) as tag_names
 	  from
@@ -300,7 +300,7 @@ order by perform_date", array(':user_id'=>User::$user->id,
          "select
 	   {$col1},
            {$col2},
-	   sum(minutes) as minutes
+	   sum(hours) as hours
 	  from
 	   ({$sql[0]}) as s
           group by

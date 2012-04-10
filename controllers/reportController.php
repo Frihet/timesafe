@@ -4,45 +4,11 @@
    the exciting stuff is JavaScript. Which is scary.
    */
 
-
-
-function makeDateSelector($name, $value, $id=null, $class=null, $attributes = array()) 
-{
-    $attr = '';
-    foreach($attributes as $key => $val) {
-        $val = htmlEncode($val);
-        $attr .= "$key='$val' ";
-    }
-    $id_str = $id?'id="'.htmlEncode($id).'"':'';
-    if ($class == null) $class = "";
-    $class_str = 'class="datepickerinput '.htmlEncode($class).'"';
-    return "<input type='text' $id_str $class_str size='16' name='".htmlEncode($name)."' value='".htmlEncode($value)."' {$attr} />\n";
-}
-
+require_once("util.php");
 
 class ReportController
 extends Controller
 {
-    function formatDate($tm)
-    {
-        return date('Y-m-d', $tm);
-    }
-
-    function today()
-    {
-        $now = time();
-        $year = date('Y', $now);
-        $month = date('m', $now);
-        $day = date('d', $now);
-        return mktime(12, 0, 0, $month, $day, $year);
-    }
-
-    function parseDate($date)
-    {
-        list($year, $month, $day) = explode('-',$date);
-        return mktime(12, 0, 0, $month, $day, $year);
-    }
-
     function viewRun()
     {
         $content = "";
@@ -52,18 +18,18 @@ extends Controller
         util::setTitle("Reporting");
 
         if (empty($_GET['start'])) {
-            $date_begin = self::today() - 14*24*3600;
-	    $date_end = self::today();
+            $date_begin = today() - 14*24*3600;
+	    $date_end = today();
         } else {
-            $date_begin = self::parseDate($_GET['start']);
-	    $date_end = self::parseDate($_GET['end']);
+            $date_begin = parseDate($_GET['start']);
+	    $date_end = parseDate($_GET['end']);
         }
 
-        $prev_link = makeUrl(array('start'=>self::formatDate($date_begin-14*24*3600), 'end'=>self::formatDate($date_end-14*24*3600)));
-        $next_link = makeUrl(array('start'=>self::formatDate($date_begin+14*24*3600), 'end'=>self::formatDate($date_end+14*24*3600)));
+        $prev_link = makeUrl(array('start'=>formatDate($date_begin-14*24*3600), 'end'=>formatDate($date_end-14*24*3600)));
+        $next_link = makeUrl(array('start'=>formatDate($date_begin+14*24*3600), 'end'=>formatDate($date_end+14*24*3600)));
         $now_link = "";
 
-	$hour_list_columns = array('perform_date' => 'Date', 'minutes' => 'Minutes', 'user_fullname' => 'User', 'project' => 'Project', 'tag_names' => 'Marks', 'description' => 'Description');
+	$hour_list_columns = array('perform_date' => 'Date', 'hours' => 'Hours', 'user_fullname' => 'User', 'project' => 'Project', 'tag_names' => 'Marks', 'description' => 'Description');
 
 
 
@@ -99,8 +65,8 @@ extends Controller
 	if (param('date')) $hidden['date']  = param('date');
 
 	$form .= "<p>";
-        $form .= " Start: " . makeDateSelector("start", self::formatDate($date_begin), null, null, array('onchange'=>'submit();'));
-        $form .= " End: " . makeDateSelector("end", self::formatDate($date_end), null, null, array('onchange'=>'submit();'));
+        $form .= " Start: " . makeDateSelector("start", formatDate($date_begin), null, null, array('onchange'=>'submit();'));
+        $form .= " End: " . makeDateSelector("end", formatDate($date_end), null, null, array('onchange'=>'submit();'));
 	$form .= "</p>";
 
 	$params = array_merge($_GET);
@@ -219,8 +185,8 @@ extends Controller
 	    }
 
 	    $filter = array(
-	     'date_begin' => self::formatDate($date_begin),
-	     'date_end' => self::formatDate($date_end),
+	     'date_begin' => formatDate($date_begin),
+	     'date_end' => formatDate($date_end),
 	     'projects' => $report_data['projects'],
 	     'tags' => $report_data['tags'],
 	     'users' => $user_ids
@@ -269,10 +235,10 @@ extends Controller
 		    if (!isset($sums[$col1value])) $sums[$col1value] = array('total' => 0);
 		    if (!isset($sums[$col1value][$col2value])) $sums[$col1value][$col2value] = 0;
 		    if (!isset($sums['total'][$col2value])) $sums['total'][$col2value] = 0;
-		    $sums[$col1value][$col2value] += $hour['minutes'];
-		    $sums[$col1value]['total'] += $hour['minutes'];
-		    $sums['total'][$col2value] += $hour['minutes'];
-		    $sums['total']['total'] += $hour['minutes'];
+		    $sums[$col1value][$col2value] += $hour['hours'];
+		    $sums[$col1value]['total'] += $hour['hours'];
+		    $sums['total'][$col2value] += $hour['hours'];
+		    $sums['total']['total'] += $hour['hours'];
 		}
 	    }
 
