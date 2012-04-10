@@ -129,8 +129,13 @@ extends Controller
 
 	$reports = isset($_GET['reports']) ? intval($_GET['reports']) : 1;
 
+        $report_datas = self::makeReportData($date_begin, $date_end, $reports, $_GET['report']);
 
-
+        if (!empty($_GET['format']) && $_GET['format'] == 'json') {
+          header('Content-type: text/plain');
+          echo json_encode($report_datas);
+          exit(0);
+        }
 
 
         $content = "";
@@ -275,8 +280,6 @@ extends Controller
 	}
         $content .= form::makeForm($form, $hidden, 'get');
 	$content .= "<div class='report_form_end'></div>";
-
-        $report_datas = self::makeReportData($date_begin, $date_end, $reports, $_GET['report']);
 
         foreach($report_datas as $report) {
 

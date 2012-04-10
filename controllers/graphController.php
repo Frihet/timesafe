@@ -82,24 +82,11 @@ extends Controller
 	    }
 	    $h->addHistogramPoint($date, $hour_lengths);
 	}
-
-/*
-	$datas = array("Hej", "Hopp");
-	$x = 0.5/count($datas);
-	$dx= 1.0/count($datas);
-	foreach($datas as $data) {
-	    $h->addText(array('x'=>$x, 'y'=>1.0), $data, array('valign'=>'top'));
-	    $x += $dx;
-	}
-*/
 	
 	$h->setParams(array('width' => (int) param('width', 640),
                             'height' => (int) param('height', 240)));
 
         $h->setLegend($idx_to_col2);
-
-
-//        $h->addPlot(array(8,9,10));
 
         $h->write();
 	exit(0);
