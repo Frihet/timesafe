@@ -135,8 +135,14 @@ table .modified input.time
 */
 .content
 {
-    width: 96%;
+    width: auto;
+    min-width: 96%;
     margin-left: 2%;
+    margin-right: 2%;
+}
+
+.content_inner
+{
 }
 
 /*
@@ -196,7 +202,8 @@ body .dnd_drop
 }
 
 .membership_col {
- height: 150px;
+ height: 300px;
+ overflow: hidden;
 }
 
 .membership_col div {
@@ -205,6 +212,11 @@ body .dnd_drop
  -o-transform: rotate(-90deg);
  filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=3);
  width: 1em;
+ white-space: nowrap;
+}
+
+.name input {
+  width: 300px;
 }
 
 ul.main_menu {

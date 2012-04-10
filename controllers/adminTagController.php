@@ -23,7 +23,7 @@ extends Controller
         $form .= "<table class='striped'>";
         
         $form .= "<tr>";
-        $form .= "<th>Name</th>";
+        $form .= "<th class='name'>Name</th>";
         $form .= "<th>Color</th>";
         $form .= "<th>Project</th>";
         $form .= "<th>Project class</th>";
@@ -45,7 +45,7 @@ extends Controller
             if($tag->id !== null)
                 $hidden["tag[$idx][id]"] = $tag->id;
 
-            $form .= "<td>".form::makeText("tag[$idx][name]",$tag->name)."</td>";
+            $form .= "<td class='name'>".form::makeText("tag[$idx][name]",$tag->name)."</td>";
             $form .= "<td>".form::makeColorSelector("tag[$idx][color]",$tag->color, null)."</td>";
             $form .= "<td>".form::makeSelect("tag[$idx][project_id]",$project_values, $tag->project_id)."</td>";
             $form .= "<td>".form::makeSelect("tag[$idx][project_class_id]",$project_class_values, $tag->project_class_id)."</td>";

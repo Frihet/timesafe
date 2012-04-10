@@ -30,8 +30,8 @@ extends Controller
         $form .= "<th></th>";
         $form .= "</tr>";
         $form .= "<tr>";
-        $form .= "<th>Name</th>";
-        $form .= "<th>Fullname</th>";
+        $form .= "<th class='username'>Name</th>";
+        $form .= "<th class='name'>Fullname</th>";
         $form .= "<th>Password</th>";
 	foreach ($project_values as $project_id => $project_name) {
 	 $form .= "<th class='membership_col'><div>{$project_name}</div></td>";
@@ -44,8 +44,8 @@ extends Controller
             $form .= "<tr>";
             if($usr->id !== null)
                 $hidden["usr[$idx][id]"] = $usr->id;
-            $form .= "<td>".form::makeText("usr[$idx][name]",$usr->name)."</td>";
-            $form .= "<td>".form::makeText("usr[$idx][fullname]",$usr->fullname)."</td>";
+            $form .= "<td class='username'>".form::makeText("usr[$idx][name]",$usr->name)."</td>";
+            $form .= "<td class='name'>".form::makeText("usr[$idx][fullname]",$usr->fullname)."</td>";
             $form .= "<td>".form::makeText("usr[$idx][password]",'')."</td>";
 
 	    foreach ($project_values as $project_id => $project_name) {

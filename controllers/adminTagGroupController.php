@@ -23,7 +23,7 @@ extends Controller
         $form .= "<table class='striped'>";
         
         $form .= "<tr>";
-        $form .= "<th>Name</th>";
+        $form .= "<th class='name'>Name</th>";
         $form .= "<th>Required</th>";
         $form .= "<th></th>";
         $form .= "</tr>";
@@ -33,7 +33,7 @@ extends Controller
             
             $form .= "<tr>";
             $hidden['tag_group_id_'.$idx]=$tag_group->id;
-            $form .= "<td>".form::makeText('tag_group_name_'.$idx,$tag_group->name)."</td>";
+            $form .= "<td class='name'>".form::makeText('tag_group_name_'.$idx,$tag_group->name)."</td>";
 
             $checked_str = $tag_group->required?'checked':'';
             

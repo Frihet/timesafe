@@ -22,15 +22,15 @@ extends Controller
         $class_values = Project::getProjectClassNames();
 
         $form = "";
-        $form .= "<table class='striped'>";
+        $form .= "<table class='striped project_list'>";
 	$form .= "<tr>";
         $form .= "<th colspan='2'></th>";
         $form .= "<th colspan='" . count($class_values) . "'>Classes</th>";
         $form .= "<th></th>";
         $form .= "</tr>";
         $form .= "<tr>";
-        $form .= "<th>Name</th>";
-        $form .= "<th>Start date</th>";
+        $form .= "<th class='name'>Name</th>";
+        $form .= "<th class='start'>Start date</th>";
 	foreach ($class_values as $class_id => $class_name) {
 	 $form .= "<th class='membership_col'><div>{$class_name}</div></td>";
 	}
@@ -43,8 +43,8 @@ extends Controller
             $form .= "<tr>";
             if($project->id !== null)
                 $hidden["project[$idx][id]"] = $project->id;
-            $form .= "<td>".form::makeText("project[$idx][name]",$project->name)."</td>";
-            $form .= "<td>".form::makeText("project[$idx][start_date]", date("r", $project->start_date))."</td>";
+            $form .= "<td class='name'>".form::makeText("project[$idx][name]",$project->name)."</td>";
+            $form .= "<td class='start'>".form::makeText("project[$idx][start_date]", date("r", $project->start_date))."</td>";
 
 	    foreach ($class_values as $class_id => $class_name) {
 	     $form .= "<td>" . form::makeListCheckbox("project[$idx][_project_class]", $class_id, in_array($class_id, $project->getProjectClass()), "", null) . "</td>";
