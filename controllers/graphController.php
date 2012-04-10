@@ -5,11 +5,35 @@ require_once 'time_report/Graph.php';
 class GraphController
 extends Controller
 {
+    function formatDate($tm)
+    {
+        return date('Y-m-d', $tm);
+    }
+
+    function today()
+    {
+        $now = time();
+        $year = date('Y', $now);
+        $month = date('m', $now);
+        $day = date('d', $now);
+        return mktime(12, 0, 0, $month, $day, $year);
+    }
+
+    function parseDate($date)
+    {
+        list($year, $month, $day) = explode('-',$date);
+        return mktime(12, 0, 0, $month, $day, $year);
+    }
+
     function viewRun()
     {
-
-        $date_end = date('Y-m-d',Entry::getBaseDate());
-        $date_begin = date('Y-m-d',Entry::getBaseDate()-(Entry::getDateCount()-1)*3600*24);
+        if (empty($_GET['start'])) {
+            $date_begin = self::today() - 14*24*3600;
+	    $date_end = self::today();
+        } else {
+            $date_begin = self::parseDate($_GET['start']);
+	    $date_end = self::parseDate($_GET['end']);
+        }
 
 	$all = User::getAllUsers();
 	$user_ids = array();
@@ -20,8 +44,8 @@ extends Controller
     	$hour_list_order = isset($_GET['order']) ? explode(',', $_GET['order']) : array('perform_date','user_fullname','project','tag_names');
 	
 	$filter = array(
-	 'date_begin' => $date_begin,
- 	 'date_end' => $date_end,
+	 'date_begin' => self::formatDate($date_begin),
+ 	 'date_end' => self::formatDate($date_end),
 	 'projects' => isset($_GET['projects']) ? $_GET['projects'] : array(),
 	 'tags' => isset($_GET['tags']) ? $_GET['tags'] : array(),
 	 'users' => $user_ids

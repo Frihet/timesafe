@@ -91,6 +91,10 @@ window.onload = function(evt) {
     TimeSafe.addProjectLines();
 }
 
+$(document).ready(function () {
+    $(".datepickerinput").datepicker({dateFormat: "yy-mm-dd"});
+});
+
 /*
    Add a few nice-to-have prototype functions
  */

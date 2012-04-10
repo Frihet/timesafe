@@ -63,12 +63,9 @@ extends Application
     function __construct()
     {
         $this->addScript('static/TimeSafe.js');
-        //$this->addScript('static/jquery-ui.js');
-        //$this->addScript('static/jquery.flot.js');
         $this->addStyle('static/TimeSafe.css', 'screen,projection,print');
-        //$this->addStyle('static/jquery-ui.css');
-	//require_once('egs.php');
-
+        $this->addScript('static/jquery-ui-1.8.17.custom.min.js');
+        $this->addStyle('static/ui-lightness/jquery-ui-1.8.18.custom.css');
     }
     
     

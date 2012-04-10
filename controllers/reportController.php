@@ -3,30 +3,44 @@
   /** The php backend for the main editing stuff. Mostly just creates a bunch of json data. All
    the exciting stuff is JavaScript. Which is scary.
    */
+
+
+
+function makeDateSelector($name, $value, $id=null, $class=null, $attributes = array()) 
+{
+    $attr = '';
+    foreach($attributes as $key => $val) {
+        $val = htmlEncode($val);
+        $attr .= "$key='$val' ";
+    }
+    $id_str = $id?'id="'.htmlEncode($id).'"':'';
+    if ($class == null) $class = "";
+    $class_str = 'class="datepickerinput '.htmlEncode($class).'"';
+    return "<input type='text' $id_str $class_str size='16' name='".htmlEncode($name)."' value='".htmlEncode($value)."' {$attr} />\n";
+}
+
+
 class ReportController
 extends Controller
 {
-    function baseDateStr()
+    function formatDate($tm)
     {
-        $tm = Entry::getBaseDate();
         return date('Y-m-d', $tm);
     }
 
-    function nextBaseDateStr()
+    function today()
     {
-        $tm = Entry::getBaseDate();
-        return date('Y-m-d', $tm + 7* 3600*24);
+        $now = time();
+        $year = date('Y', $now);
+        $month = date('m', $now);
+        $day = date('d', $now);
+        return mktime(12, 0, 0, $month, $day, $year);
     }
 
-    function prevBaseDateStr()
+    function parseDate($date)
     {
-        $tm = Entry::getBaseDate();
-        return date('Y-m-d', $tm - 7* 3600*24);
-    }
-
-    function nowBaseDateStr()
-    {
-        return date('Y-m-d');
+        list($year, $month, $day) = explode('-',$date);
+        return mktime(12, 0, 0, $month, $day, $year);
     }
 
     function viewRun()
@@ -37,12 +51,17 @@ extends Controller
 
         util::setTitle("Reporting");
 
-        $next = self::nextBaseDateStr();
-        $prev = self::prevBaseDateStr();
-        $now = self::nowBaseDateStr();
-        $prev_link = makeUrl(array('date'=>$prev));
-        $next_link = makeUrl(array('date'=>$next));
-        $now_link = makeUrl(array('date'=>$now));
+        if (empty($_GET['start'])) {
+            $date_begin = self::today() - 14*24*3600;
+	    $date_end = self::today();
+        } else {
+            $date_begin = self::parseDate($_GET['start']);
+	    $date_end = self::parseDate($_GET['end']);
+        }
+
+        $prev_link = makeUrl(array('start'=>self::formatDate($date_begin-14*24*3600), 'end'=>self::formatDate($date_end-14*24*3600)));
+        $next_link = makeUrl(array('start'=>self::formatDate($date_begin+14*24*3600), 'end'=>self::formatDate($date_end+14*24*3600)));
+        $now_link = "";
 
 	$hour_list_columns = array('perform_date' => 'Date', 'minutes' => 'Minutes', 'user_fullname' => 'User', 'project' => 'Project', 'tag_names' => 'Marks', 'description' => 'Description');
 
@@ -79,8 +98,11 @@ extends Controller
 	$hidden = array('controller' => 'report', 'reports' => $reports);
 	if (param('date')) $hidden['date']  = param('date');
 
-        $form .= "<p><a href='$prev_link'>«earlier</a> <a href='$now_link'>today</a>  <a href='$next_link'>later»</a></p>";
-	
+	$form .= "<p>";
+        $form .= " Start: " . makeDateSelector("start", self::formatDate($date_begin), null, null, array('onchange'=>'submit();'));
+        $form .= " End: " . makeDateSelector("end", self::formatDate($date_end), null, null, array('onchange'=>'submit();'));
+	$form .= "</p>";
+
 	$params = array_merge($_GET);
 	$params['reports'] = $reports + 1;
 	$form .= "<a href='" . makeUrl($params) . "' />Add another report item</a><br>";
@@ -176,10 +198,6 @@ extends Controller
         $content .= form::makeForm($form, $hidden, 'get');
 	$content .= "<div class='report_form_end'></div>";
 
-
-	$date_end = date('Y-m-d',Entry::getBaseDate());
-	$date_begin = date('Y-m-d',Entry::getBaseDate()-(Entry::getDateCount()-1)*3600*24);
-
 	for ($report = 0; $report < $reports; $report++) {
 	    $report_data = isset($_GET['report']) && isset($_GET['report'][$report]) ? $_GET['report'][$report] : array();
 	    $report_data = array_merge(array(
@@ -201,8 +219,8 @@ extends Controller
 	    }
 
 	    $filter = array(
-	     'date_begin' => $date_begin,
-	     'date_end' => $date_end,
+	     'date_begin' => self::formatDate($date_begin),
+	     'date_end' => self::formatDate($date_end),
 	     'projects' => $report_data['projects'],
 	     'tags' => $report_data['tags'],
 	     'users' => $user_ids
@@ -264,7 +282,7 @@ extends Controller
 	    }
 
 	    if ($report_data['type'] == 'graph') {
-	        $params = array_merge($report_data, array('controller'=>'graph', 'width' => '1024', 'height' => '480', 'date' => param('date')));
+	        $params = array_merge($report_data, array('controller'=>'graph', 'width' => '1024', 'height' => '480', 'start' => param('start'), 'end' => param('end')));
 	        $params['order'] = implode(',', $params['order']);
 		$content .= "<img src='" . makeUrl($params) . "' />";
 	    }
