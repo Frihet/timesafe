@@ -144,12 +144,7 @@ extends Controller
 
         util::setTitle("Reporting");
 
-        $prev_link = makeUrl(array('start'=>formatDate($date_begin-14*24*3600), 'end'=>formatDate($date_end-14*24*3600)));
-        $next_link = makeUrl(array('start'=>formatDate($date_begin+14*24*3600), 'end'=>formatDate($date_end+14*24*3600)));
-        $now_link = "";
-
-	$this->hour_list_columns = array('perform_date' => 'Date', 'hours' => 'Hours', 'user_fullname' => 'User', 'project' => 'Project', 'tag_names' => 'Marks', 'description' => 'Description');
-
+        $content .= "<p><a href='". makeUrl(array('format' => 'json')) . "'>Download as JSON</a></p>";
 
 	/* Manage saved reports */
 	$hidden = array('controller'=>'report','task'=>'saveReport', 'current_query' => makeUrl($_GET));
@@ -320,8 +315,6 @@ extends Controller
 			foreach($columns as $col => $col_desc) {
 			    $tag = $first ? 'th' : 'td';
 			    $value = $hour[$col];
-			    if ($col == 'perform_date')
-			        $value = date('Y-m-d', $value);
 			    if ($col == 'tag_names') {
 			        $color = util::colorToHex($hour['color_r'], $hour['color_g'], $hour['color_b']);
 			        $content .= "<{$tag} style='background: {$color}; color: {$color}'>#</{$tag}>";
