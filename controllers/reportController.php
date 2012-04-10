@@ -276,7 +276,7 @@ extends Controller
 		}
 	    }
 
-	    $content .= "<div class='{$report_data['cls']}'>";
+	    $content .= "<div class='{$report_data['cls']} report_item'>";
 	    if ($report_data['title'] != "") {
 	        $content .= "<h1>{$report_data['title']}</h1>";
 	    }
@@ -319,7 +319,7 @@ extends Controller
 			        $color = util::colorToHex($hour['color_r'], $hour['color_g'], $hour['color_b']);
 			        $content .= "<{$tag} style='background: {$color}; color: {$color}'>#</{$tag}>";
 			    }
-			    $content .= "<{$tag}>{$value}</{$tag}>";
+			    $content .= "<{$tag} class='column_{$col}'>{$value}</{$tag}>";
 			    $first = false;
 			}
 			$content .= " </tr>";

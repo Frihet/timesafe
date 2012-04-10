@@ -243,12 +243,27 @@ ul.main_menu li a {
  padding: 5px;
 }
 
+.report_item {
+  max-width: 100%;
+  overflow: auto;
+}
+
 .report_timetable {
  width: 100%;
 }
 
 .report_timetable * {
  white-space: nowrap;
+ vertical-align: top;
+ text-align: left;
+}
+
+.report_timetable .column_description {
+ white-space: normal;
+}
+
+.report_timetable .column_minutes {
+ text-align: right;
 }
 
 .report_form_part {
