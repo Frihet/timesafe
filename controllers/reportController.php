@@ -144,8 +144,6 @@ extends Controller
 
         util::setTitle("Reporting");
 
-        $content .= "<p><a href='". makeUrl(array('format' => 'json')) . "'>Download as JSON</a></p>";
-
 	/* Manage saved reports */
 	$hidden = array('controller'=>'report','task'=>'saveReport', 'current_query' => makeUrl($_GET));
 	$form = "";
@@ -171,6 +169,7 @@ extends Controller
 	$form .= "</div>";
 	$content .= form::makeForm($form, $hidden);
 
+        $content .= "<p><a href='". makeUrl(array('format' => 'json')) . "'>Download as JSON</a></p>";
 
 	/* Manage this report */
         $form = "";
