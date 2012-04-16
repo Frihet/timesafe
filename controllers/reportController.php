@@ -43,9 +43,9 @@ extends Controller
           'cls' => '',
           'type' => 'graph',
           'order' => 'perform_date,user_fullname,project,tag_names',
-          'users' => array(),
+          'user_fullname' => array(),
           'tag_names' => array(),
-          'projects' => array(),
+          'project' => array(),
           'mark_types' => 'both'
         ), $report_definition);
         $report_data['order'] = explode(',', $report_data['order']);
@@ -118,12 +118,13 @@ extends Controller
         if ($report_data['type'] == 'group') {            
             foreach ($sums as $group => $sumdata) {
                 if ($group == 'total') continue;
-                $filterForCol = array("perform_date" => "perform_date","user_fullname" => "users", "project" => "projects", "tag_names" => "tags");
-                
+
+                if (!isset($report_data['items'])) $report_data['items'] = array('reports' => 1);
+                if (!isset($report_data['items']['reports'])) $report_data['items']['reports'] = 1;
                 $definitions = array('reports' => $report_data['items']['reports']);
                 for ($index = 0; $index < $report_data['items']['reports']; $index++) {
                     $item = array_merge(isset($report_data['items'][$index]) ? $report_data['items'][$index] : array());
-                    $item[$filterForCol[$col1]] = array($group);
+                    $item[$col1] = array($group);
                     $definitions[$index] = $item;
                 }
                 $groups[$group] = self::makeReportData($date_begin, $date_end, $definitions);
@@ -258,10 +259,12 @@ extends Controller
             $content .= "</table>";
         } else if ($report_data['report_data']['type'] == 'group') {
             foreach($report_data['items'] as $title => $group) {
+                $content .= "<div class='report_group'>";
+                $content .= "<h1>{$title}</h1>";
                 foreach ($group as $item) {
-                    $item['report_data']['title'] = $title;
                     $content .= self::reportViewerItem($item);
                 }
+                $content .= "</div>";
             }
         }
         $content .= "</div>";
@@ -283,9 +286,9 @@ extends Controller
           'cls' => '',
           'type' => 'graph',
           'order' => 'perform_date,user_fullname,project,tag_names',
-          'users' => array(),
+          'user_fullname' => array(),
           'tag_names' => array(),
-          'projects' => array(),
+          'project' => array(),
           'mark_types' => 'both'
         ), $report_data);
 
@@ -300,9 +303,9 @@ extends Controller
                    <tr><th>Users</th><th>Tags</th><th>Projects</th><th>Sort order</th></tr>
                    <tr>";
 
-        $form .= "<td>" . form::makeSelect("{$prefix}[users]", form::makeSelectList($data['all_users'], 'name', 'fullname'), $report_data['users'], null, array('onchange'=>'submit();')) . "</td>";
-        $form .= "<td>" . form::makeSelect("{$prefix}[tags]", form::makeSelectList($data['all_tags'], 'name', 'name'), $report_data['tag_names'], null, array('onchange'=>'submit();')) . "</td>";
-        $form .= "<td>" . form::makeSelect("{$prefix}[projects]", form::makeSelectList($data['all_projects'], 'name', 'name'), $report_data['projects'], null, array('onchange'=>'submit();')) . "</td>";
+        $form .= "<td>" . form::makeSelect("{$prefix}[user_fullname]", form::makeSelectList($data['all_users'], 'fullname', 'fullname'), $report_data['user_fullname'], null, array('onchange'=>'submit();')) . "</td>";
+        $form .= "<td>" . form::makeSelect("{$prefix}[tag_names]", form::makeSelectList($data['all_tags'], 'name', 'name'), $report_data['tag_names'], null, array('onchange'=>'submit();')) . "</td>";
+        $form .= "<td>" . form::makeSelect("{$prefix}[project]", form::makeSelectList($data['all_projects'], 'name', 'name'), $report_data['project'], null, array('onchange'=>'submit();')) . "</td>";
 
         $form .= '<td>';
         foreach ($report_data['order'] as $item) {

@@ -221,15 +221,9 @@ order by perform_date", array(':user_id'=>User::$user->id,
     function sqlColoredEntries($filter, $order, $mark_types = 'both') {
         $sql = self::sqlColoredMarks($mark_types);
 
-        $all = User::getAllUsers();
-        $user_ids = array();
-        foreach ($filter['users'] as $usr) {
-            $user_ids[] = $all[$usr]->id;
-        }
-
 	$date_sql = util::arrayToSqlIn("perform_date", isset($filter['perform_date']) ? $filter['perform_date'] : array());
-	$user_sql = util::arrayToSqlIn("e.user_id", isset($filter['users']) ? $user_ids : array());
-	$project_sql = util::arrayToSqlIn("p.name", isset($filter['projects']) ? $filter['projects'] : array());
+	$user_sql = util::arrayToSqlIn("u.fullname", isset($filter['user_fullname']) ? $filter['user_fullname'] : array());
+	$project_sql = util::arrayToSqlIn("p.name", isset($filter['project']) ? $filter['project'] : array());
 
 	$tag_sql = util::arrayToSqlIn("t.name", isset($filter['tag_names']) ? $filter['tag_names'] : array());
 	if ($tag_sql[0] != "true") {

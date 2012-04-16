@@ -37,13 +37,10 @@ extends Controller
 
     	$hour_list_order = isset($_GET['order']) ? explode(',', $_GET['order']) : array('perform_date','user_fullname','project','tag_names');
 	
-	$filter = array(
-	 'date_begin' => self::formatDate($date_begin),
- 	 'date_end' => self::formatDate($date_end),
-	 'projects' => isset($_GET['projects']) ? $_GET['projects'] : array(),
-	 'tags' => isset($_GET['tags']) ? $_GET['tags'] : array(),
-	 'users' => isset($_GET['users']) ? $_GET['users'] : array(),
-	);
+        $filter = array_merge($_GET);
+        $filter['date_begin'] = self::formatDate($date_begin);
+        $filter['date_end'] = self::formatDate($date_end);
+
 	$mark_types = isset($_GET['mark_types']) ? $_GET['mark_types'] : 'both';
         $colors = Entry::colors($filter, $hour_list_order, $mark_types);
 	$hours_by_date = Entry::groupByColor($filter, $hour_list_order, $mark_types);
