@@ -17,11 +17,13 @@ function makePrefixedUrl($prefix, $arr)
         $prefix = array_merge(array($base), explode("][", substr($prefix[1], 0, -1)));
     }
 
-    $toset = array(); 
+    $toset = array_merge($_GET);
     $current = &$toset;
     for ($i = 0; $i < count($prefix) - 1; $i ++) {
         $item = $prefix[$i];
-        $current[$item] = array();
+        if (!isset($current[$item])) {
+            $current[$item] = array();
+        }
         $current = &$current[$item];
     }
     $current[$prefix[count($prefix)-1]] = $arr;
@@ -274,7 +276,9 @@ extends Controller
           'mark_types' => 'both'
         ), $report_data);
 
-        $hidden["{$prefix}[order]"] = $report_data['order'];
+        $header = "Show as " . form::makeSelect("{$prefix}[type]", array('graph' => 'Graph', 'list' => 'Hour list', 'sum' => 'Hour summary', 'group' => 'Group of reports'), $report_data['type'], null, array('onchange'=>'submit();'));
+
+        $form = makeHidden("{$prefix}[order]", $report_data['order']);
         $report_data['order'] = explode(',', $report_data['order']);
 
         $form = "";
@@ -300,19 +304,28 @@ extends Controller
 
         $form .= "</tr></table>";
 
-        $form .= "Show as " . form::makeSelect("{$prefix}[type]", array('graph' => 'Graph', 'list' => 'Hour list', 'sum' => 'Hour summary'), $report_data['type'], null, array('onchange'=>'submit();'));
+        $form .= "<div>Mark types: " . form::makeSelect("{$prefix}[mark_types]", array('both' => 'Both', 'tags' => 'Tags', 'classes' => 'Project classes'), $report_data['mark_types'], null, array('onchange'=>'submit();')) . "</div>";
 
-        $form .= " Mark types: " . form::makeSelect("{$prefix}[mark_types]", array('both' => 'Both', 'tags' => 'Tags', 'classes' => 'Project classes'), $report_data['mark_types'], null, array('onchange'=>'submit();'));
+        if ($report_data['type'] == 'group') {
+            $items = isset($report_data['items']) ? $report_data['items'] : array();
+            $form .= "<br>" . self::reportDesignerItems("{$prefix}[items]", $items, $data);
+        }
 
-        return $form;
+        return array("header" => $header, "body" => $form);
     }
 
     function reportDesignerItem($prefix, $index, $report_datas, $data) {
         if (!isset($report_datas[$index])) $report_datas[$index] = array();
 
+        $content = self::reportDesignerElement("{$prefix}[{$index}]", $report_datas[$index], $data);
+
         $form = "";
         $form .= "<div class='report_form_part'>";
         $form .= " <div class='report_form_part_header'>";
+        $form .= "   <div class='report_form_part_header_left'>";
+        $form .= $content['header'];
+        $form .= "   </div>";
+        $form .= "   <div class='report_form_part_header_right'>";
 
         /* Shift left */
         if ($index > 0) {
@@ -348,10 +361,9 @@ extends Controller
 
             $form .= "<a href='" . makePrefixedUrl($prefix, $params) . "' />&gt;&gt;</a>";
         }
+        $form .= "   </div>";
         $form .= " </div>";
-
-        $form .= self::reportDesignerElement("{$prefix}[{$index}]", $report_datas[$index], $data);
-
+        $form .= $content['body'];
         $form .= " </div>";
 
         return $form;

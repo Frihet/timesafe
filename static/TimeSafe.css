@@ -294,7 +294,13 @@ ul.main_menu li a {
  margin-left: -10px;
  margin-right: -10px;
  margin-bottom: 10px;
- text-align:right;
+ height: 2em;
+}
+.report_form_part_header_left {
+  float: left;
+}
+.report_form_part_header_right {
+  float: right;
 }
 .report_form_part_header a {
  color: #ffffff;
