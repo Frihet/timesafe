@@ -6,15 +6,41 @@
 
 require_once("util.php");
 
+function makePrefixedUrl($prefix, $arr)
+{
+    /* Convert "foo[bar][fie]" to array("foo", "bar", "fie) */
+    if (strpos($prefix, "[") === false) {
+        $prefix = array($prefix);
+    } else {
+        $prefix = explode("[", $prefix, 2);
+        $base = $prefix[0];
+        $prefix = array_merge(array($base), explode("][", substr($prefix[1], 0, -1)));
+    }
+
+    $toset = array(); 
+    $current = &$toset;
+    for ($i = 0; $i < count($prefix) - 1; $i ++) {
+        $item = $prefix[$i];
+        $current[$item] = array();
+        $current = &$current[$item];
+    }
+    $current[$prefix[count($prefix)-1]] = $arr;
+
+    return makeUrl($toset);
+}
+
 class ReportController
 extends Controller
 {
     private $hour_list_columns = array('perform_date' => 'Date', 'hours' => 'Hours', 'user_fullname' => 'User', 'project' => 'Project', 'tag_names' => 'Marks', 'description' => 'Description');
 
-    function makeReportData ($date_begin, $date_end, $nrreports, $reports) {
+    function makeReportData ($date_begin, $date_end, $report_definitions) {
+        if (!isset($report_definitions)) $report_definitions = array();
+	$report_definitions['reports'] = isset($report_definitions['reports']) ? intval($report_definitions['reports']) : 1;
+
         $res = array();
-	for ($report = 0; $report < $nrreports; $report++) {
-	    $report_data = isset($reports) && isset($reports[$report]) ? $reports[$report] : array();
+	for ($report = 0; $report < $report_definitions['reports']; $report++) {
+	    $report_data = isset($report_definitions) && isset($report_definitions[$report]) ? $report_definitions[$report] : array();
 	    $report_data = array_merge(array(
 	      'title' => '',
 	      'cls' => '',
@@ -116,109 +142,139 @@ extends Controller
         return $res;
     }
 
-    function reportDesigner($date_begin, $date_end, $reports)
+    function reportDesignerElement($prefix, $report_data, $data) {
+        $report_data = array_merge(array(
+          'title' => '',
+          'cls' => '',
+          'type' => 'graph',
+          'order' => 'perform_date,user_fullname,project,tag_names',
+          'users' => array(),
+          'tags' => array(),
+          'projects' => array(),
+          'mark_types' => 'both'
+        ), $report_data);
+
+        $hidden["{$prefix}[order]"] = $report_data['order'];
+        $report_data['order'] = explode(',', $report_data['order']);
+
+        $form = "";
+
+        $form .= "Title: " . form::makeText("{$prefix}[title]", $report_data['title'], null, null, array('onchange'=>'submit();'));
+        $form .= "Class: " . form::makeText("{$prefix}[cls]", $report_data['cls'], null, null, array('onchange'=>'submit();'));
+        $form .= "<table>
+                   <tr><th>Users</th><th>Tags</th><th>Projects</th><th>Sort order</th></tr>
+                   <tr>";
+
+        $form .= "<td>" . form::makeSelect("{$prefix}[users]", form::makeSelectList($data['all_users'], 'name', 'fullname'), $report_data['users'], null, array('onchange'=>'submit();')) . "</td>";
+        $form .= "<td>" . form::makeSelect("{$prefix}[tags]", form::makeSelectList($data['all_tags'], 'name', 'name'), $report_data['tags'], null, array('onchange'=>'submit();')) . "</td>";
+        $form .= "<td>" . form::makeSelect("{$prefix}[projects]", form::makeSelectList($data['all_projects'], 'name', 'name'), $report_data['projects'], null, array('onchange'=>'submit();')) . "</td>";
+
+        $form .= '<td>';
+        foreach ($report_data['order'] as $item) {
+            $new_order = array_merge(array($item), array_diff($report_data['order'], array($item)));
+            $params = array_merge($report_data);
+            $params['order'] = implode(',',$new_order);
+            $form .= "<a href='" . makePrefixedUrl($prefix, $params) . "' />{$this->hour_list_columns[$item]}</a><br>";
+        }
+        $form .= "</td>";
+
+        $form .= "</tr></table>";
+
+        $form .= "Show as " . form::makeSelect("{$prefix}[type]", array('graph' => 'Graph', 'list' => 'Hour list', 'sum' => 'Hour summary'), $report_data['type'], null, array('onchange'=>'submit();'));
+
+        $form .= " Mark types: " . form::makeSelect("{$prefix}[mark_types]", array('both' => 'Both', 'tags' => 'Tags', 'classes' => 'Project classes'), $report_data['mark_types'], null, array('onchange'=>'submit();'));
+
+        return $form;
+    }
+
+    function reportDesignerItem($prefix, $index, $report_datas, $data) {
+        if (!isset($report_datas[$index])) $report_datas[$index] = array();
+
+        $form = "";
+        $form .= "<div class='report_form_part'>";
+        $form .= " <div class='report_form_part_header'>";
+
+        /* Shift left */
+        if ($index > 0) {
+            if (!isset($report_datas[$index-1])) $report_datas[$index-1] = array();
+
+            $params = array_merge($report_datas);
+
+            $temp = $params[$index];
+            $params[$index] = $params[$index-1];
+            $params[$index-1] = $temp;
+
+            $form .= "<a href='" . makePrefixedUrl($prefix, $params) . "' />&lt;&lt;</a> ";
+        }
+
+        /* Remove-link */
+        $params = array_merge($report_datas);
+        $reports = $params['reports'] - 1;
+        unset($params[$index]);
+        unset($params['reports']);
+        $params = array_values($params);
+        $params['reports'] = $reports;
+        $form .= "<a href='" . makePrefixedUrl($prefix, $params) . "' />X</a> ";
+
+        /* Shift right */
+        if ($index < $params['reports'] - 1) {
+            if (!isset($report_datas[$index+1])) $report_datas[$index+1] = array();
+
+            $params = array_merge($report_datas);
+
+            $temp = $params[$index];
+            $params[$index] = $params[$index+1];
+            $params[$index+1] = $temp;
+
+            $form .= "<a href='" . makePrefixedUrl($prefix, $params) . "' />&gt;&gt;</a>";
+        }
+        $form .= " </div>";
+
+        $form .= self::reportDesignerElement("{$prefix}[{$index}]", $report_datas[$index], $data);
+
+        $form .= " </div>";
+
+        return $form;
+    }
+
+    function reportDesignerItems($prefix, $report_datas, $data) {
+        if (!isset($report_datas)) $report_datas = array();
+	$report_datas['reports'] = isset($report_datas['reports']) ? intval($report_datas['reports']) : 1;
+
+        $form = '';
+
+        $form .= makeHidden("{$prefix}[reports]", $report_datas['reports']);
+
+	$params = array_merge($report_datas);
+	$params['reports'] = $params['reports'] + 1;
+	$form .= "<a href='" . makePrefixedUrl($prefix, $params) . "' />Add another report item</a><br>";
+
+	for ($index = 0; $index < $report_datas['reports']; $index++) {
+            $form .= self::reportDesignerItem($prefix, $index, $report_datas, $data);
+	}
+        return $form;
+    }
+
+    function reportDesigner($date_begin, $date_end)
     {
 	/* Manage this report */
         $form = "";
-	$hidden = array('controller' => 'report', 'reports' => $reports);
+	$hidden = array('controller' => 'report');
 
 	$form .= "<p>";
         $form .= " Start: " . makeDateSelector("start", formatDate($date_begin), null, null, array('onchange'=>'submit();'));
         $form .= " End: " . makeDateSelector("end", formatDate($date_end), null, null, array('onchange'=>'submit();'));
 	$form .= "</p>";
 
-	$params = array_merge($_GET);
-	$params['reports'] = $reports + 1;
-	$form .= "<a href='" . makeUrl($params) . "' />Add another report item</a><br>";
+        $data = array(
+            'all_users' => User::getAllUsers(),
+	    'all_tags' => Tag::fetch(),
+	    'all_projects' => Project::getProjects());
 
-	$all_users = User::getAllUsers();
-	$all_tags = Tag::fetch();
-	$all_projects = Project::getProjects();
+        $report_datas = isset($_GET['report']) ? $_GET['report'] : array();
 
-	for ($report = 0; $report < $reports; $report++) {
-	    $report_data = isset($_GET['report']) && isset($_GET['report'][$report]) ? $_GET['report'][$report] : array();
-	    $report_data = array_merge(array(
-	      'title' => '',
-	      'cls' => '',
-	      'type' => 'graph',
-	      'order' => 'perform_date,user_fullname,project,tag_names',
-	      'users' => array(),
-	      'tags' => array(),
-	      'projects' => array(),
-	      'mark_types' => 'both'
-	    ), $report_data);
-	    
-	    $hidden["report[{$report}][order]"] = $report_data['order'];
-	    $report_data['order'] = explode(',', $report_data['order']);
+        $form .= self::reportDesignerItems('report', $report_datas, $data);
 
-            $form .= "<div class='report_form_part'>";
-            $form .= " <div class='report_form_part_header'>";
-
-    	    /* Shift left */
-	    if ($report > 0) {
-		$params = array_merge($_GET);
-		if (!isset($params['report'])) $params['report'] = array();
-		if (!isset($params['report'][$report])) $params['report'][$report] = array();
-		if (!isset($params['report'][$report-1])) $params['report'][$report-1] = array();
-
-		$temp = $params['report'][$report];
-		$params['report'][$report] = $params['report'][$report-1];
-		$params['report'][$report-1] = $temp;
-
-		$params['report'] = isset($params['report']) ? array_values($params['report']) : array();
-		$form .= "<a href='" . makeUrl($params) . "' />&lt;&lt;</a> ";
-	    }
-
-	    /* Remove-link */
-	    $params = array_merge($_GET);
-	    unset($params['report'][$report]);
-	    $params['report'] = isset($params['report']) ? array_values($params['report']) : array();
-	    $params['reports'] = $reports - 1;
-	    $form .= "<a href='" . makeUrl($params) . "' />X</a> ";
-
-	    /* Shift right */
-	    if ($report < $reports - 1) {
-		$params = array_merge($_GET);
-		if (!isset($params['report'])) $params['report'] = array();
-		if (!isset($params['report'][$report])) $params['report'][$report] = array();
-		if (!isset($params['report'][$report+1])) $params['report'][$report+1] = array();
-
-		$temp = $params['report'][$report];
-		$params['report'][$report] = $params['report'][$report+1];
-		$params['report'][$report+1] = $temp;
-
-		$params['report'] = isset($params['report']) ? array_values($params['report']) : array();
-		$form .= "<a href='" . makeUrl($params) . "' />&gt;&gt;</a>";
-	    }
-	    $form .= " </div>";
-	    
-	    $form .= "Title: " . form::makeText("report[{$report}][title]", $report_data['title'], null, null, array('onchange'=>'submit();'));
-	    $form .= "Class: " . form::makeText("report[{$report}][cls]", $report_data['cls'], null, null, array('onchange'=>'submit();'));
-	    $form .= "<table>
-		       <tr><th>Users</th><th>Tags</th><th>Projects</th><th>Sort order</th></tr>
-		       <tr>";
-
-	    $form .= "<td>" . form::makeSelect("report[{$report}][users]", form::makeSelectList($all_users, 'name', 'fullname'), $report_data['users'], null, array('onchange'=>'submit();')) . "</td>";
-	    $form .= "<td>" . form::makeSelect("report[{$report}][tags]", form::makeSelectList($all_tags, 'name', 'name'), $report_data['tags'], null, array('onchange'=>'submit();')) . "</td>";
-	    $form .= "<td>" . form::makeSelect("report[{$report}][projects]", form::makeSelectList($all_projects, 'name', 'name'), $report_data['projects'], null, array('onchange'=>'submit();')) . "</td>";
-
-	    $form .= '<td>';
-	    foreach ($report_data['order'] as $item) {
-		$new_order = array_merge(array($item), array_diff($report_data['order'], array($item)));
-		$params = array_merge($_GET);
-		$params['report'][$report]['order'] = implode(',',$new_order);
-		$form .= "<a href='" . makeUrl($params) . "' />{$this->hour_list_columns[$item]}</a><br>";
-	    }
-	    $form .= "</td>";
-
-	    $form .= "</tr></table>";
-
-	    $form .= "Show as " . form::makeSelect("report[{$report}][type]", array('graph' => 'Graph', 'list' => 'Hour list', 'sum' => 'Hour summary'), $report_data['type'], null, array('onchange'=>'submit();'));
-
-	    $form .= " Mark types: " . form::makeSelect("report[{$report}][mark_types]", array('both' => 'Both', 'tags' => 'Tags', 'classes' => 'Project classes'), $report_data['mark_types'], null, array('onchange'=>'submit();'));
-
-	    $form .= "</div>";
-	}
         return form::makeForm($form, $hidden, 'get') . "<div class='report_form_end'></div>";
     }
 
@@ -229,7 +285,7 @@ extends Controller
         foreach($report_datas as $report) {
 
 	    $content .= "<div class='{$report['report_data']['cls']} report_item'>";
-	    if ($report_data['title'] != "") {
+	    if ($report['report_data']['title'] != "") {
 	        $content .= "<h1>{$report['report_data']['title']}</h1>";
 	    }
 
@@ -340,9 +396,7 @@ extends Controller
 	    $date_end = parseDate($_GET['end']);
         }
 
-	$reports = isset($_GET['reports']) ? intval($_GET['reports']) : 1;
-
-        $report_datas = self::makeReportData($date_begin, $date_end, $reports, $_GET['report']);
+        $report_datas = self::makeReportData($date_begin, $date_end, isset($_GET['report']) ? $_GET['report'] : array());
 
         if (!empty($_GET['format']) && $_GET['format'] == 'json') {
           header('Content-type: text/plain');
@@ -361,7 +415,7 @@ extends Controller
 
         $content .= "<p><a href='". makeUrl(array('format' => 'json')) . "'>Download as JSON</a></p>";
 
-        $content .= self::reportDesigner($date_begin, $date_end, $reports);
+        $content .= self::reportDesigner($date_begin, $date_end, isset($_GET['report']) ? $_GET['report'] : array());
 
         $content .= self::reportViewer($report_datas);
 
