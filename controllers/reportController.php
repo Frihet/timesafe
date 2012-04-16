@@ -37,31 +37,22 @@ extends Controller
     private $hour_list_columns = array('perform_date' => 'Date', 'hours' => 'Hours', 'user_fullname' => 'User', 'project' => 'Project', 'tag_names' => 'Marks', 'description' => 'Description');
 
     function makeReportDataElement($date_begin, $date_end, $report_definition) {
+        //echo "<pre>"; print_r($report_definition); echo "</pre>";
         $report_data = array_merge(array(
           'title' => '',
           'cls' => '',
           'type' => 'graph',
           'order' => 'perform_date,user_fullname,project,tag_names',
           'users' => array(),
-          'tags' => array(),
+          'tag_names' => array(),
           'projects' => array(),
           'mark_types' => 'both'
         ), $report_definition);
         $report_data['order'] = explode(',', $report_data['order']);
 
-        $all = User::getAllUsers();
-        $user_ids = array();
-        foreach ($report_data['users'] as $usr) {
-            $user_ids[] = $all[$usr]->id;
-        }
-
-        $filter = array(
-         'date_begin' => formatDate($date_begin),
-         'date_end' => formatDate($date_end),
-         'projects' => $report_data['projects'],
-         'tags' => $report_data['tags'],
-         'users' => $user_ids
-        );
+        $filter = array_merge($report_data);
+        $filter['date_begin'] = formatDate($date_begin);
+        $filter['date_end'] = formatDate($date_end);
 
         $hours_by_date = Entry::coloredEntries($filter, $report_data['order'], $report_data['mark_types']);
 
@@ -127,7 +118,7 @@ extends Controller
         if ($report_data['type'] == 'group') {            
             foreach ($sums as $group => $sumdata) {
                 if ($group == 'total') continue;
-                $filterForCol = array("perform_date" => "date","user_fullname" => "users", "project" => "projects", "tag_names" => "tags");
+                $filterForCol = array("perform_date" => "perform_date","user_fullname" => "users", "project" => "projects", "tag_names" => "tags");
                 
                 $definitions = array('reports' => $report_data['items']['reports']);
                 for ($index = 0; $index < $report_data['items']['reports']; $index++) {
@@ -293,7 +284,7 @@ extends Controller
           'type' => 'graph',
           'order' => 'perform_date,user_fullname,project,tag_names',
           'users' => array(),
-          'tags' => array(),
+          'tag_names' => array(),
           'projects' => array(),
           'mark_types' => 'both'
         ), $report_data);
@@ -310,7 +301,7 @@ extends Controller
                    <tr>";
 
         $form .= "<td>" . form::makeSelect("{$prefix}[users]", form::makeSelectList($data['all_users'], 'name', 'fullname'), $report_data['users'], null, array('onchange'=>'submit();')) . "</td>";
-        $form .= "<td>" . form::makeSelect("{$prefix}[tags]", form::makeSelectList($data['all_tags'], 'name', 'name'), $report_data['tags'], null, array('onchange'=>'submit();')) . "</td>";
+        $form .= "<td>" . form::makeSelect("{$prefix}[tags]", form::makeSelectList($data['all_tags'], 'name', 'name'), $report_data['tag_names'], null, array('onchange'=>'submit();')) . "</td>";
         $form .= "<td>" . form::makeSelect("{$prefix}[projects]", form::makeSelectList($data['all_projects'], 'name', 'name'), $report_data['projects'], null, array('onchange'=>'submit();')) . "</td>";
 
         $form .= '<td>';
@@ -324,7 +315,7 @@ extends Controller
 
         $form .= "</tr></table>";
 
-        $form .= "<div>Mark types: " . form::makeSelect("{$prefix}[mark_types]", array('both' => 'Both', 'tags' => 'Tags', 'classes' => 'Project classes'), $report_data['mark_types'], null, array('onchange'=>'submit();')) . "</div>";
+        $form .= "<div>Mark types: " . form::makeSelect("{$prefix}[mark_types]", array('both' => 'Both', 'tag_names' => 'Tags', 'classes' => 'Project classes'), $report_data['mark_types'], null, array('onchange'=>'submit();')) . "</div>";
 
         if ($report_data['type'] == 'group') {
             $items = isset($report_data['items']) ? $report_data['items'] : array();

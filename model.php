@@ -220,10 +220,18 @@ order by perform_date", array(':user_id'=>User::$user->id,
 
     function sqlColoredEntries($filter, $order, $mark_types = 'both') {
         $sql = self::sqlColoredMarks($mark_types);
-	$user_sql = util::arrayToSqlIn("e.user_id", isset($filter['users']) ? $filter['users'] : array());
+
+        $all = User::getAllUsers();
+        $user_ids = array();
+        foreach ($filter['users'] as $usr) {
+            $user_ids[] = $all[$usr]->id;
+        }
+
+	$date_sql = util::arrayToSqlIn("perform_date", isset($filter['perform_date']) ? $filter['perform_date'] : array());
+	$user_sql = util::arrayToSqlIn("e.user_id", isset($filter['users']) ? $user_ids : array());
 	$project_sql = util::arrayToSqlIn("p.name", isset($filter['projects']) ? $filter['projects'] : array());
 
-	$tag_sql = util::arrayToSqlIn("t.name", isset($filter['tags']) ? $filter['tags'] : array());
+	$tag_sql = util::arrayToSqlIn("t.name", isset($filter['tag_names']) ? $filter['tag_names'] : array());
 	if ($tag_sql[0] != "true") {
 	    $tag_sql[0] = "e.id in (select et.entry_id from tr_tag_map et join tr_tag t on et.tag_id = t.id where {$tag_sql[0]})";
 	}
@@ -254,6 +262,7 @@ order by perform_date", array(':user_id'=>User::$user->id,
 	  where
 	   perform_date <= :date_end 
 	   and perform_date >= :date_begin 
+           and {$date_sql[0]}
            and {$user_sql[0]}
            and {$project_sql[0]}
 	   and {$tag_sql[0]}
@@ -261,7 +270,7 @@ order by perform_date", array(':user_id'=>User::$user->id,
 	   e.id, u.id, u.name, u.fullname, p.id, p.name, e.description, e.perform_date, e.minutes
 	  order by
            {$order}",
-	 array_merge($sql[1], $user_sql[1], $project_sql[1], $tag_sql[1],
+	 array_merge($sql[1], $date_sql[1], $user_sql[1], $project_sql[1], $tag_sql[1],
 	  array(':date_end'=>$filter['date_end'],
 	        ':date_begin'=>$filter['date_begin'])));
     }

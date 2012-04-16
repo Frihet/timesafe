@@ -35,12 +35,6 @@ extends Controller
 	    $date_end = self::parseDate($_GET['end']);
         }
 
-	$all = User::getAllUsers();
-	$user_ids = array();
-	foreach (param('users',array()) as $usr) {
-	    $user_ids[] = $all[$usr]->id;
-	}
-
     	$hour_list_order = isset($_GET['order']) ? explode(',', $_GET['order']) : array('perform_date','user_fullname','project','tag_names');
 	
 	$filter = array(
@@ -48,7 +42,7 @@ extends Controller
  	 'date_end' => self::formatDate($date_end),
 	 'projects' => isset($_GET['projects']) ? $_GET['projects'] : array(),
 	 'tags' => isset($_GET['tags']) ? $_GET['tags'] : array(),
-	 'users' => $user_ids
+	 'users' => isset($_GET['users']) ? $_GET['users'] : array(),
 	);
 	$mark_types = isset($_GET['mark_types']) ? $_GET['mark_types'] : 'both';
         $colors = Entry::colors($filter, $hour_list_order, $mark_types);
