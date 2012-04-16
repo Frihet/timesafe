@@ -22,7 +22,7 @@ function makeHidden($name, $value, $id=null, $class=null, $attributes = array())
     }
     $id_str = $id?'id="'.htmlEncode($id).'"':'';
     if ($class == null) $class = "";
-    $class_str = 'class="datepickerinput '.htmlEncode($class).'"';
+    $class_str = 'class="'.htmlEncode($class).'"';
 
     $res = '';
     if (is_array($value)) {

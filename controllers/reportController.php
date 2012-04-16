@@ -62,6 +62,7 @@ extends Controller
          'tags' => $report_data['tags'],
          'users' => $user_ids
         );
+
         $hours_by_date = Entry::coloredEntries($filter, $report_data['order'], $report_data['mark_types']);
 
         foreach ($hours_by_date as &$hours) {
@@ -121,12 +122,30 @@ extends Controller
             }
         }
 
+        /* Handle groups */
+        $groups = array();
+        if ($report_data['type'] == 'group') {            
+            foreach ($sums as $group => $sumdata) {
+                if ($group == 'total') continue;
+                $filterForCol = array("perform_date" => "date","user_fullname" => "users", "project" => "projects", "tag_names" => "tags");
+                
+                $definitions = array('reports' => $report_data['items']['reports']);
+                for ($index = 0; $index < $report_data['items']['reports']; $index++) {
+                    $item = array_merge(isset($report_data['items'][$index]) ? $report_data['items'][$index] : array());
+                    $item[$filterForCol[$col1]] = array($group);
+                    $definitions[$index] = $item;
+                }
+                $groups[$group] = self::makeReportData($date_begin, $date_end, $definitions);
+            }
+        }
+
         return array(
             'report_data' => $report_data,
             'idx_to_color' => $idx_to_color,
             'tag_names_to_idx' => $tag_names_to_idx,
             'hours_by_date' => $hours_by_date,
             'sums' => $sums,
+            'items' => $groups,
             'col1' => $col1,
             'col2' => $col2, 
             'title1' => $title1,
@@ -163,9 +182,7 @@ extends Controller
             $params = array_merge($report_data['report_data'], array('controller'=>'graph', 'width' => '1024', 'height' => '480', 'start' => param('start'), 'end' => param('end')));
             $params['order'] = implode(',', $params['order']);
             $content .= "<img src='" . makeUrl($params) . "' />";
-        }
-
-        if ($report_data['report_data']['type'] == 'list') {
+        } else if ($report_data['report_data']['type'] == 'list') {
             $columns = array_merge($this->hour_list_columns);
             $ordered_columns = array();
             foreach ($report_data['report_data']['order'] as $col) {
@@ -202,9 +219,7 @@ extends Controller
                 }
             }
             $content .= "</table>";
-        }
-
-        if ($report_data['report_data']['type'] == 'sum') {
+        } else if ($report_data['report_data']['type'] == 'sum') {
             $content .= "<table class='report_timetable'>";
             $content .= " <tr>";
             $content .= "  <th>{$report_data['title1']}</th>";
@@ -250,6 +265,13 @@ extends Controller
                 }
             }
             $content .= "</table>";
+        } else if ($report_data['report_data']['type'] == 'group') {
+            foreach($report_data['items'] as $title => $group) {
+                foreach ($group as $item) {
+                    $item['report_data']['title'] = $title;
+                    $content .= self::reportViewerItem($item);
+                }
+            }
         }
         $content .= "</div>";
         return $content;
@@ -280,8 +302,6 @@ extends Controller
 
         $form = makeHidden("{$prefix}[order]", $report_data['order']);
         $report_data['order'] = explode(',', $report_data['order']);
-
-        $form = "";
 
         $form .= "Title: " . form::makeText("{$prefix}[title]", $report_data['title'], null, null, array('onchange'=>'submit();'));
         $form .= "Class: " . form::makeText("{$prefix}[cls]", $report_data['cls'], null, null, array('onchange'=>'submit();'));
