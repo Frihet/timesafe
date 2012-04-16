@@ -116,61 +116,8 @@ extends Controller
         return $res;
     }
 
-
-    function viewRun()
+    function reportDesigner($date_begin, $date_end, $reports)
     {
-        if (empty($_GET['start'])) {
-            $date_begin = today() - 14*24*3600;
-	    $date_end = today();
-        } else {
-            $date_begin = parseDate($_GET['start']);
-	    $date_end = parseDate($_GET['end']);
-        }
-
-	$reports = isset($_GET['reports']) ? intval($_GET['reports']) : 1;
-
-        $report_datas = self::makeReportData($date_begin, $date_end, $reports, $_GET['report']);
-
-        if (!empty($_GET['format']) && $_GET['format'] == 'json') {
-          header('Content-type: text/plain');
-          echo json_encode($report_datas);
-          exit(0);
-        }
-
-
-        $content = "";
-        $content .= "<div id='debug' style='position:absolute;right: 100px;'></div>";
-        $content .= "<div id='dnd_text' style='position:absolute;left: 0px;top: 0px; display:none;'></div>";
-
-        util::setTitle("Reporting");
-
-	/* Manage saved reports */
-	$hidden = array('controller'=>'report','task'=>'saveReport', 'current_query' => makeUrl($_GET));
-	$form = "";
-	$form .= "<div class='report_manager'>";
-        $form .= " <table>";
-        $form .= "  <tr><th>Saved reports</th><th></th></tr>";
-        $idx = 0;
-        foreach(Report::fetch() as $report_manager) {
-            $form .= " <tr>";
-            if($report_manager->id !== null)
-                $hidden["report_manager[$idx][id]"] = $report_manager->id;
-            $form .= "  <td><a href='{$report_manager->query}'>{$report_manager->name}</td>";
-            $form .= "  <td><button type='submit' name='report_manager[{$idx}][remove]' value='1'>Remove</button></td>";
-            $form .= " </tr>";
-            $idx++;
-        }
-	$form .= "  <tr>";
-	$hidden["report_manager[$idx][query]"] = makeUrl($_GET);
-	$form .= "   <td>".form::makeText("report_manager[{$idx}][name]", "", null, null)."</td>";
-	$form .= "   <td><button type='submit' name='report_manager[{$idx}][add]' value='1'>Save</button></td>";
-	$form .= "  </tr>";
-        $form .= " </table>";
-	$form .= "</div>";
-	$content .= form::makeForm($form, $hidden);
-
-        $content .= "<p><a href='". makeUrl(array('format' => 'json')) . "'>Download as JSON</a></p>";
-
 	/* Manage this report */
         $form = "";
 	$hidden = array('controller' => 'report', 'reports' => $reports);
@@ -272,9 +219,13 @@ extends Controller
 
 	    $form .= "</div>";
 	}
-        $content .= form::makeForm($form, $hidden, 'get');
-	$content .= "<div class='report_form_end'></div>";
+        return form::makeForm($form, $hidden, 'get') . "<div class='report_form_end'></div>";
+    }
 
+
+    function reportViewer($report_datas)
+    {
+        $content = '';
         foreach($report_datas as $report) {
 
 	    $content .= "<div class='{$report['report_data']['cls']} report_item'>";
@@ -376,11 +327,77 @@ extends Controller
 	    }
 	    $content .= "</div>";
 	}
+        return $content;
+    }
+
+    function viewRun()
+    {
+        if (empty($_GET['start'])) {
+            $date_begin = today() - 14*24*3600;
+	    $date_end = today();
+        } else {
+            $date_begin = parseDate($_GET['start']);
+	    $date_end = parseDate($_GET['end']);
+        }
+
+	$reports = isset($_GET['reports']) ? intval($_GET['reports']) : 1;
+
+        $report_datas = self::makeReportData($date_begin, $date_end, $reports, $_GET['report']);
+
+        if (!empty($_GET['format']) && $_GET['format'] == 'json') {
+          header('Content-type: text/plain');
+          echo json_encode($report_datas);
+          exit(0);
+        }
+
+
+        $content = "";
+        $content .= "<div id='debug' style='position:absolute;right: 100px;'></div>";
+        $content .= "<div id='dnd_text' style='position:absolute;left: 0px;top: 0px; display:none;'></div>";
+
+        util::setTitle("Reporting");
+
+	$content .= self::savedReportManager();
+
+        $content .= "<p><a href='". makeUrl(array('format' => 'json')) . "'>Download as JSON</a></p>";
+
+        $content .= self::reportDesigner($date_begin, $date_end, $reports);
+
+        $content .= self::reportViewer($report_datas);
 
         $this->show(null, $content);
 
     }
     
+
+
+    function savedReportManager()
+    {
+	/* Manage saved reports */
+	$hidden = array('controller'=>'report','task'=>'saveReport', 'current_query' => makeUrl($_GET));
+	$form = "";
+	$form .= "<div class='report_manager'>";
+        $form .= " <table>";
+        $form .= "  <tr><th>Saved reports</th><th></th></tr>";
+        $idx = 0;
+        foreach(Report::fetch() as $report_manager) {
+            $form .= " <tr>";
+            if($report_manager->id !== null)
+                $hidden["report_manager[$idx][id]"] = $report_manager->id;
+            $form .= "  <td><a href='{$report_manager->query}'>{$report_manager->name}</td>";
+            $form .= "  <td><button type='submit' name='report_manager[{$idx}][remove]' value='1'>Remove</button></td>";
+            $form .= " </tr>";
+            $idx++;
+        }
+	$form .= "  <tr>";
+	$hidden["report_manager[$idx][query]"] = makeUrl($_GET);
+	$form .= "   <td>".form::makeText("report_manager[{$idx}][name]", "", null, null)."</td>";
+	$form .= "   <td><button type='submit' name='report_manager[{$idx}][add]' value='1'>Save</button></td>";
+	$form .= "  </tr>";
+        $form .= " </table>";
+	$form .= "</div>";
+	return form::makeForm($form, $hidden);
+    }
 
     function saveReportRun()
     {
