@@ -257,6 +257,29 @@ extends Controller
                 }
             }
             $content .= "</table>";
+        } else if ($report_data['report_data']['type'] == 'sumtotal') {
+            $content .= "<table class='report_timetable'>";
+            $content .= " <tr>";
+            $content .= "  <th>{$report_data['title1']}</th>";
+            if ($report_data['col1'] == 'tag_names') {
+                $content .= "  <th></th>";
+            }
+            $content .= "  <th>Total</th>";
+            $content .= " </tr>";
+
+            foreach ($report_data['sums'] as $col1value => $col2_sums) {
+                if ($col1value != 'total') {
+                    $content .= "<tr><th class='column_{$report_data['col1']}'>{$col1value}</th>";
+                    if ($report_data['col1'] == 'tag_names') {
+                        $color = $report_data['idx_to_color'][$report_data['tag_names_to_idx'][$col1value]];
+                        $color = util::colorToHex($color[0], $color[1], $color[2]);
+                        $content .= "<td style='background: {$color}; color: {$color}'>#</td>";
+                    }
+                    $content .= "<td>{$col2_sums['total']}</td>";
+                    $content .= " </tr>";
+                }
+            }
+            $content .= "</table>";
         } else if ($report_data['report_data']['type'] == 'group') {
             foreach($report_data['items'] as $title => $group) {
                 $content .= "<div class='report_group'>";
@@ -292,7 +315,7 @@ extends Controller
           'mark_types' => 'both'
         ), $report_data);
 
-        $header = "Show as " . form::makeSelect("{$prefix}[type]", array('graph' => 'Graph', 'list' => 'Hour list', 'sum' => 'Hour summary', 'group' => 'Group of reports'), $report_data['type'], null, array('onchange'=>'submit();'));
+        $header = "Show as " . form::makeSelect("{$prefix}[type]", array('graph' => 'Graph', 'list' => 'Hour list', 'sum' => 'Hour summary', 'sumtotal' => 'Total hour summary', 'group' => 'Group of reports'), $report_data['type'], null, array('onchange'=>'submit();'));
 
         $form = makeHidden("{$prefix}[order]", $report_data['order']);
         $report_data['order'] = explode(',', $report_data['order']);
