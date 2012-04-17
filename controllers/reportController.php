@@ -97,8 +97,9 @@ extends Controller
         $col1values = array();
         $col2values = array();
         $sums = array('total' => array('total' => 0));
-        foreach ($hours_by_date as $hours) {
-            foreach ($hours as $hour) {
+
+        foreach ($hours_by_date as &$hours) {
+            foreach ($hours as &$hour) {
                 $col1value = $hour[$col1];
                 $col2value = $hour[$col2];
                 if (!in_array($col1value, $col1values)) $col1values[] = $col1value;
